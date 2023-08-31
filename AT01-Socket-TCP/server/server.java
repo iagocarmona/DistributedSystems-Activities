@@ -12,7 +12,7 @@ public class server {
                 Socket clientSocket = listenSocket.accept();
                 
                 System.out.println("Cliente conectado ... Criando thread ...");
-                Connection c = new Connection(clientSocket);
+                new Connection(clientSocket);
             }
             
         } catch (IOException e) {
