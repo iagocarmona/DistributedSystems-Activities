@@ -26,7 +26,7 @@ public class client {
                 }
 
                 String response = in.readUTF();  // aguarda resposta do servidor
-                System.out.println("Resposta do servidor: " + response);
+                System.out.println(response);
             }
 
             in.close();
