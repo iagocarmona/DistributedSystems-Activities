@@ -1,6 +1,8 @@
 import java.net.*;
 import java.io.*;
 
+import java.security.MessageDigest;
+
 public class server {
     public static server.User[] users;
 
@@ -165,11 +167,11 @@ public class server {
         
         public User(String name, String password) {
             this.name = name;
-            this.password = password;
+            this.password = this.convertSHA512(password);
         }
 
         public boolean authenticate(String name, String password) {
-            return this.name.equals(name) && this.password.equals(password);
+            return this.name.equals(name) && this.password.equals(this.convertSHA512(password));
         }
 
         public String getName() {
@@ -178,6 +180,24 @@ public class server {
 
         public String getPassword() {
             return this.password;
+        }
+
+        public String convertSHA512(String password){
+            try {
+                MessageDigest digest = MessageDigest.getInstance("SHA-512");
+                byte[] hash = digest.digest(password.getBytes("UTF-8"));
+                StringBuilder hexString = new StringBuilder();
+
+                for (int i = 0; i < hash.length; i++) {
+                    String hex = Integer.toHexString(0xff & hash[i]);
+                    if(hex.length() == 1) hexString.append('0');
+                    hexString.append(hex);
+                }
+
+                return hexString.toString();
+            } catch(Exception ex){
+                throw new RuntimeException(ex);
+            }
         }
     }
 }
