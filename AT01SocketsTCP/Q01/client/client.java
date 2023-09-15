@@ -1,3 +1,5 @@
+package AT01SocketsTCP.Q01.client;
+
 import java.net.*;
 import java.io.*;
 
