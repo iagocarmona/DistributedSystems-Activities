@@ -1,32 +1,36 @@
 package AT01SocketsTCP.Q02.client;
 
+
+/**
+ * Descrição: Cliente para conexao TCP
+ * Descricao: Envia uma informacao ao servidor e recebe confirmações ECHO.
+ * 
+ * Autor: Iago Ortega Carmona
+ * 
+ * Data de criação: 05/09/2023
+ * Data última atualização: 15/09/2023
+ */
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.nio.ByteOrder;
+import java.util.List;
 import java.net.*;
 import java.io.*;
 
-import AT01SocketsTCP.Q02.headers.RequestPacket;
-import AT01SocketsTCP.Q02.headers.ResponsePacket;
-
 public class client {
 
-    public static void printResponseStatusCode(byte commandId, byte statusCode) {
-        switch (commandId) {
-            case 1: // ADDFILE
-                if (statusCode == 2)
-                    System.out.println("Erro ao tentar criar arquivo :(");
-                else
-                    System.out.println("Arquivo criado com sucesso :)");
-                break;
-            case 2: // DELETE
-                if (statusCode == 2)
-                    System.out.println("Erro ao tentar deletar arquivo :(");
-                else
-                    System.out.println("Arquivo deletar com sucesso :)");
-                break;
-            case 3: // GETFILESLIST
-                break;
-            case 4: // GETFILE
-                break;
-        }
+    public static ByteBuffer createHeader(byte messageType, byte commandId, byte filenameSize, String filename) {
+        ByteBuffer header = ByteBuffer.allocate(259); 
+        header.order(ByteOrder.BIG_ENDIAN);
+
+        header.put(0, messageType);
+        header.put(1, commandId);
+        header.put(2, filenameSize);
+        header.position(3);
+        header.put(filename.getBytes());
+
+        return header;
     }
 
     public static int saveFile(String filename, String content) throws IOException {
@@ -51,6 +55,27 @@ public class client {
             return 0;
         }
     }
+
+    public static void printResponseStatusCode(byte commandId, byte statusCode, byte messageType) {
+        switch (commandId) {
+            case 1: // ADDFILE
+                if (statusCode == 2)
+                    System.out.println("Erro ao tentar criar arquivo. Message type: " + messageType);
+                else
+                    System.out.println("Arquivo criado com sucesso!");
+                break;
+            case 2: // DELETE
+                if (statusCode == 2)
+                    System.out.println("Erro ao tentar deletar arquivo. Message type: " + messageType);
+                else
+                    System.out.println("Arquivo deletado com sucesso!");
+                break;
+            case 3: // GETFILESLIST
+                break;
+            case 4: // GETFILE
+                break;
+        }
+    }
     
     public static void main(String args[]) {
         Socket s = null;
@@ -64,53 +89,134 @@ public class client {
             DataOutputStream out = new DataOutputStream(s.getOutputStream());
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+
+            byte[] bytes = null;
+            ByteBuffer buffer = null;
             
             while (true) {
                 String data = reader.readLine();   /* aguarda o envio de dados */
-                String[] command = data.split(" ");
+                String[] arg = data.split(" ");
+                String command = arg[0];
 
                 String filename = "";
                 byte messageType = 0x01;
                 
-                if (command[0].equalsIgnoreCase("ADDFILE")) {
-                    filename = command[1];
+                if (command.equalsIgnoreCase("ADDFILE")) {
+                    filename = arg[1];
+                    int fileSize = Integer.parseInt(arg[2]);
                 
-                    // Crie o objeto RequestPacket
-                    RequestPacket request = new RequestPacket(messageType, (byte) 0x01, (byte) filename.length(), filename);
-                    request.writeToStream(out);
+                    ByteBuffer headerBuffer = createHeader(messageType, (byte) 0x01, (byte) filename.length(), filename);
+                    buffer = ByteBuffer.allocate(headerBuffer.remaining() + 4);
+
+                    buffer.put(headerBuffer);
+                    buffer.putInt(fileSize);
+                    buffer.flip();
+
+                    out.write(buffer.array());
                     out.flush();
-                } else if (command[0].equalsIgnoreCase("GETFILESLIST")){
-                    // Crie o objeto RequestPacket
-                    RequestPacket request = new RequestPacket(messageType, (byte) 0x02, (byte) filename.length(), filename);
-                    request.writeToStream(out);
+                } else if (command.equalsIgnoreCase("GETFILESLIST")){
+                    buffer = createHeader(messageType, (byte) 0x02, (byte) filename.length(), filename);
+
+                    bytes = buffer.array();
+                    int size = buffer.limit();
+                    out.write(bytes, 0, size); 
                     out.flush();
-                } else if (command[0].equalsIgnoreCase("DELETE")){
-                    filename = command[1];
+                } else if (command.equalsIgnoreCase("DELETE")){
+                    filename = arg[1];
                 
-                    // Crie o objeto RequestPacket
-                    RequestPacket request = new RequestPacket(messageType, (byte) 0x03, (byte) filename.length(), filename);
-                    request.writeToStream(out);
+                    buffer = createHeader(messageType, (byte) 0x03, (byte) filename.length(), filename);
+
+                    bytes = buffer.array();
+                    int size = buffer.limit();
+                    out.write(bytes, 0, size); 
                     out.flush();
-                } else if (command[0].equalsIgnoreCase("GETFILE")){
-                    filename = command[1];
+                } else if (command.equalsIgnoreCase("GETFILE")){
+                    filename = arg[1];
                 
-                    // Crie o objeto RequestPacket
-                    RequestPacket request = new RequestPacket(messageType, (byte) 0x04, (byte) filename.length(), filename);
-                    request.writeToStream(out);
+                    buffer = createHeader(messageType, (byte) 0x04, (byte) filename.length(), filename);
+
+                    bytes = buffer.array();
+                    int size = buffer.limit();
+                    out.write(bytes, 0, size); 
                     out.flush();
                 } else {
                     System.out.println("Comando inválido");
                 }
 
-                // Leia os bytes do inputStream e crie um ResponsePacket
-                ResponsePacket response = ResponsePacket.readFromStream(in);
+                // Aguardando resposta do servidor
+                in.read(bytes);
 
-                // Agora você pode acessar os campos do ResponsePacket
-                byte responseMessageType = response.getMessageType();
-                byte responseCommandIdentifier = response.getCommandIdentifier();
-                byte responseStatusCode = response.getStatusCode();
+                buffer = ByteBuffer.wrap(bytes);
+                buffer.order(ByteOrder.BIG_ENDIAN);
+                byte responseMessageType = buffer.get(0);
+                byte responseCommandId = buffer.get(1);
+                byte responseStatusCode = buffer.get(2);
 
+                 int sizeOfContent = 0;
+                switch (command) {
+                    case "GETFILELIST":
+                        bytes = new byte[1];
+                        byte[] numberOfFilesInBytes = new byte[2];
 
+                        for (int i = 0; i < 2; i++) {
+                            in.read(bytes);
+                            numberOfFilesInBytes[i] = bytes[0];
+                        }
+
+                        buffer = ByteBuffer.wrap(numberOfFilesInBytes);
+                        buffer.order(ByteOrder.BIG_ENDIAN);
+                        sizeOfContent = buffer.getShort();
+
+                        List<String> fileList = new ArrayList<String>();
+
+                        bytes = new byte[1];
+
+                        for (int i = 0; i < sizeOfContent; i++) {
+                            in.read(bytes);
+                            byte filenameLength = bytes[0];
+                            byte[] filenameNameInBytes = new byte[filenameLength];
+
+                            for (int j = 0; j < filenameLength; j++) {
+                                in.read(bytes);
+                                filenameNameInBytes[j] = bytes[0];
+                            }
+
+                            String name = new String(filenameNameInBytes);
+                            fileList.add(name);
+                        }
+
+                        System.out.printf("Quantidade de arquivos %d\n", fileList.size());
+
+                        for (String name : fileList) {
+                            System.out.println(name);
+                        }
+
+                        break;
+                    case "GETFILE":
+                        in.read(bytes);
+                        buffer = ByteBuffer.wrap(bytes);
+                        buffer.order(ByteOrder.BIG_ENDIAN);
+                        sizeOfContent = buffer.getInt();
+
+                        System.out.println("sizeOfContent: " + sizeOfContent);
+
+                        bytes = new byte[1];
+                        byte[] contentByte = new byte[sizeOfContent];
+                        for (int i = 0; i < sizeOfContent; i++) {
+                            in.read(bytes);
+                            byte b = bytes[0];
+                            contentByte[i] = b;
+                        }
+
+                        String content = new String(contentByte);
+                        System.out.println(content);
+                        saveFile(filename, content);
+
+                        break;
+                    default:
+                        printResponseStatusCode(responseCommandId, responseStatusCode, responseMessageType);
+                        break;
+                }
             }
         } catch (UnknownHostException e) {
             System.out.println("Socket:" + e.getMessage());
