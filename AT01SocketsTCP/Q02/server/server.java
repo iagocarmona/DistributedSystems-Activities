@@ -17,6 +17,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
 import java.util.logging.*;
 
 public class server {
@@ -29,7 +30,12 @@ public class server {
                     Socket clientSocket = listenSocket.accept();
                     
                     System.out.println("Cliente conectado ... Criando thread ...");
-                    new Connection(clientSocket);
+
+                    /* cria um thread para atender a conexao */
+                    Connection c = new Connection(clientSocket);
+
+                    // /* inicializa a thread */
+                    c.start();
                 }
             }
 
@@ -37,46 +43,41 @@ public class server {
             System.out.println("Listen socket: " + e.getMessage());
         }
     }
-
-
-    /**
-     * Descrição: Thread responsavel pela comunicacao
-     * Descricao: Recebe um socket, cria os objetos de leitura e escrita,
-     * aguarda msgs clientes e responde com a msg + :OK
-     * 
-     * Autor: Iago Ortega Carmona
-     * 
-     * Data de criação: 05/09/2023
-     * Data última atualização: 15/09/2023
-     */
     static class Connection extends Thread {
         DataInputStream in;
         DataOutputStream out;
         Socket clientSocket;
-
+    
         String currentPath;
 
         private static final Logger logger = Logger.getLogger("tcp");
-
-        public Connection(Socket aClientSocket) {
+    
+        public Connection(Socket ClientSocket) {
             try {
-                FileHandler fileHandler = new FileHandler("./AT01SocketsTCP/Q02/tcp.log");
+                FileHandler fileHandler = new FileHandler("./tcp.log");
                 fileHandler.setFormatter(new SimpleFormatter());
                 logger.addHandler(fileHandler);
-
-                clientSocket = aClientSocket;
+                
+    
+                this.clientSocket = ClientSocket;
                 in = new DataInputStream(clientSocket.getInputStream());
                 out = new DataOutputStream(clientSocket.getOutputStream());
-                this.start();  /* inicializa a thread */
-
+    
+                File filesDir = new File("./files");
+                if (!filesDir.exists()) {
+                    filesDir.mkdirs();
+                }
+    
                 logger.info("Cliente se conectou");
-
-			    this.currentPath = System.getProperty("user.dir") + "/AT01SocketsTCP/Q02/files";
+                System.out.println("Cliente se conectou");
+    
+                this.currentPath = System.getProperty("user.dir") + "/files";
             } catch (IOException e) {
+                logger.info("Connection: " + e.getMessage());
                 System.out.println("Connection: " + e.getMessage());
             }
         }
-
+    
         public static String getCommandByByte(byte commandId) {
             switch (commandId) {
                 case 1:
@@ -91,7 +92,7 @@ public class server {
                     return "UNKNOWN";
             }
         }
-
+    
         public ByteBuffer createResponseHeader(byte messageType, byte commandId, byte statusCode) {
             ByteBuffer header = ByteBuffer.allocate(3);
             header.order(ByteOrder.BIG_ENDIAN);
@@ -103,28 +104,32 @@ public class server {
     
             return header;
         }
-
+    
+        @Override
         public void run() {
             try {
                 int headerSize = 259;
-
                 while (true) {
+                    System.out.println("Aguardando header");
                     logger.info("Criando e configurando header");
+    
                     byte[] bytes = new byte[headerSize];
                     this.in.read(bytes);
+    
                     ByteBuffer header = ByteBuffer.wrap(bytes);
                     header.order(ByteOrder.BIG_ENDIAN);
-
+    
+                    byte messageType = header.get(0);
                     byte commandId = header.get(1);
                     byte filenameSize = header.get(2);
                     byte[] byteFilename = Arrays.copyOfRange(bytes, 3, filenameSize + 3);
                     String filename = new String(byteFilename);
-
+    
                     String command = getCommandByByte(commandId);
-
+    
                     byte statusCode = 2;
-				    byte[] responseContent = null;
-				    List<String> getFilesListResponseContent = null;
+                    byte[] responseContent = null;
+                    List<String> getFilesListResponseContent = null;
                     
                     if (command.equalsIgnoreCase("ADDFILE")) {
                         String path = this.currentPath + "/" + filename;
@@ -153,24 +158,25 @@ public class server {
                                 logger.info("Arquivo deletado com sucesso");
                                 statusCode = 1;
                             }
+                        } else {
+                            logger.warning("Erro ao deletar arquivo");
+                            statusCode = 2;
                         }
                 
-                        logger.warning("Erro ao deletar arquivo");
-                        statusCode = 2;
                     } else if (command.equalsIgnoreCase("GETFILELIST")){
                         System.out.println(this.currentPath);
                         File dir = new File(this.currentPath);
                         File[] arrayFiles = dir.listFiles();
-
+    
                         List<String> fileList = new ArrayList<String>();
-
+    
                         logger.info("Obtendo arquivos do diretório");
                         for (File f : arrayFiles) {
                             if (f.isFile()) {
                                 fileList.add(f.getName());
                             }
                         }
-
+    
                         getFilesListResponseContent = fileList;
                     } else if (command.equalsIgnoreCase("GETFILE")) {
                         byte[] response = null;
@@ -192,7 +198,7 @@ public class server {
                     } else {
                         out.writeUTF("Comando inválido.");
                     }
-
+    
                     // Enviado cabeçalho de resposta com tamanho fixo
                     logger.info("Enviando header de resposta de tamanho fixo");
                     byte responseCode = 2;
@@ -201,7 +207,7 @@ public class server {
                     int size = buffer.limit();
                     out.write(bytes, 0, size);
                     out.flush();
-
+    
                     // Enviado conteudos do arquivos
                     logger.info("Enviando conteúdo");
                     switch (command) {
@@ -212,25 +218,25 @@ public class server {
                                 listOfFilesSize = 0;
                             else
                                 listOfFilesSize = getFilesListResponseContent.size();
-
+    
                             logger.info("Criando e adicionando dados no buffer");
                             buffer = ByteBuffer.allocate(2);
                             buffer.put((byte) ((listOfFilesSize >> 8) & 0xFF)); // INSERINDO BYTE MAIS SIGNIFICATIVO
                             buffer.put((byte) (listOfFilesSize & 0xFF)); // INSERINDO BYTE MENOS SIGNIFICATIVO
-
+    
                             bytes = buffer.array();
                             size = buffer.limit();
-
+    
                             out.write(bytes, 0, size);
                             out.flush();
-
+    
                             for (String fileName : getFilesListResponseContent) {
                                 byte[] filenameInBytes = fileName.getBytes();
                                 byte filenameLength = (byte) fileName.length();
-
+    
                                 out.write(filenameLength);
                                 out.flush();
-
+    
                                 logger.info("Enviando nomes dos arquivos byte a byte");
                                 for (int i = 0; i < filenameLength; i++) {
                                     logger.info("Enviou byte: " + filenameInBytes[i]);
@@ -238,7 +244,7 @@ public class server {
                                     out.flush();
                                 }
                             }
-
+    
                             break;
                         case "GETFILE":
                             logger.info("Iniciando envio da resposta do comando GETFILE");
@@ -247,7 +253,7 @@ public class server {
                                 sizeResponseContent = 0;
                             else
                                 sizeResponseContent = responseContent.length;
-
+    
                             logger.info("Criando e adicionando dados no buffer");
                             buffer = ByteBuffer.allocate(4);
                             buffer.order(ByteOrder.BIG_ENDIAN);
@@ -256,21 +262,21 @@ public class server {
                             size = buffer.limit();
                             out.write(bytes, 0, size);
                             out.flush();
-
+    
                             logger.info("Enviando conteúdo do arquivo byte a byte");
                             for (int i = 0; i < sizeResponseContent; i++) {
                                 logger.info("Enviou byte: " + responseContent[i]);
                                 out.write(responseContent[i]);
                                 out.flush();
                             }
-
+    
                             break;
-
+    
                     }
-				}
+                }
             } catch (EOFException e) {
                 logger.info("End Of File Exception: " + e.getMessage());
-			    System.out.println("EOF: " + e.getMessage());
+                System.out.println("EOF: " + e.getMessage());
             } catch (IOException e) {
                 logger.info("I/O Exception: " + e.getMessage());
                 System.out.println("Erro de leitura: " + e.getMessage());
@@ -285,9 +291,9 @@ public class server {
                     System.err.println("IOE: " + e);
                 }
             }
-
             logger.info("Comunicação finalizada.");
             System.out.println("Comunicação finalizada.");
         }
     }
 }
+

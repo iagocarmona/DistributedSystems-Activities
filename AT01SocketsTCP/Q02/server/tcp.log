@@ -1,0 +1,88 @@
+set 17, 2023 8:27:06 PM AT01SocketsTCP.Q02.server.server$Connection <init>
+INFORMAÇÕES: Cliente se conectou
+set 17, 2023 8:27:07 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Criando e configurando header
+set 17, 2023 8:27:21 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Criando arquivo
+set 17, 2023 8:27:21 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Escrevendo conteúdo no arquivo
+set 17, 2023 8:27:21 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Arquivo criado com sucesso
+set 17, 2023 8:27:21 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviando header de resposta de tamanho fixo
+set 17, 2023 8:27:21 PM AT01SocketsTCP.Q02.server.server$Connection createResponseHeader
+INFORMAÇÕES: ResponseHeader criado
+set 17, 2023 8:27:21 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviando conteúdo
+set 17, 2023 8:27:21 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Criando e configurando header
+set 17, 2023 8:27:29 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Arquivo deletado com sucesso
+set 17, 2023 8:27:29 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviando header de resposta de tamanho fixo
+set 17, 2023 8:27:29 PM AT01SocketsTCP.Q02.server.server$Connection createResponseHeader
+INFORMAÇÕES: ResponseHeader criado
+set 17, 2023 8:27:29 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviando conteúdo
+set 17, 2023 8:27:29 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Criando e configurando header
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Obtendo conteúdo do arquivo
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Fechando Stream de dados
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviando header de resposta de tamanho fixo
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection createResponseHeader
+INFORMAÇÕES: ResponseHeader criado
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviando conteúdo
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Iniciando envio da resposta do comando GETFILE
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Criando e adicionando dados no buffer
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviando conteúdo do arquivo byte a byte
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: 84
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: 101
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: 115
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: 116
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: 101
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: 32
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: 100
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: 101
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: 32
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: 99
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: 111
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: 110
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: 116
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: 101
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: -61
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: -70
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: 100
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Enviou byte: 111
+set 17, 2023 8:27:35 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Criando e configurando header
+set 17, 2023 8:27:50 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: I/O Exception: Connection reset
+set 17, 2023 8:27:50 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Fechando conexão
+set 17, 2023 8:27:50 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Comunicação finalizada.

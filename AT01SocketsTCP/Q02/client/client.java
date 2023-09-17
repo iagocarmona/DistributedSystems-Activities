@@ -15,6 +15,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.nio.ByteOrder;
 import java.util.List;
+import java.util.Scanner;
 import java.net.*;
 import java.io.*;
 
@@ -79,6 +80,7 @@ public class client {
     
     public static void main(String args[]) {
         Socket s = null;
+        Scanner reader = new Scanner(System.in);
         try {
             int serverPort = 7896;   /* especifica a porta */
             String ip = "localhost";
@@ -88,43 +90,43 @@ public class client {
             DataInputStream in = new DataInputStream(s.getInputStream());
             DataOutputStream out = new DataOutputStream(s.getOutputStream());
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-
+            String keyboardBuffer = "";
             byte[] bytes = null;
-            ByteBuffer buffer = null;
             
             while (true) {
-                String data = reader.readLine();   /* aguarda o envio de dados */
-                String[] arg = data.split(" ");
-                String command = arg[0];
+                keyboardBuffer = reader.nextLine();  /* aguarda o envio de dados */
+                String[] arg = keyboardBuffer.split(" ");
 
+                String command = arg[0];
                 String filename = "";
-                byte messageType = 0x01;
+                byte messageType = 1;
+
+                ByteBuffer buffer = null;
                 
                 if (command.equalsIgnoreCase("ADDFILE")) {
                     filename = arg[1];
                     int fileSize = Integer.parseInt(arg[2]);
-                
-                    ByteBuffer headerBuffer = createHeader(messageType, (byte) 0x01, (byte) filename.length(), filename);
-                    buffer = ByteBuffer.allocate(headerBuffer.remaining() + 4);
 
-                    buffer.put(headerBuffer);
+                    buffer = createHeader(messageType, (byte) 1, (byte) filename.length(), filename);
                     buffer.putInt(fileSize);
                     buffer.flip();
 
-                    out.write(buffer.array());
+                    bytes = new byte[buffer.remaining()];
+                    buffer.get(bytes); 
+
+                    out.write(bytes);
                     out.flush();
-                } else if (command.equalsIgnoreCase("GETFILESLIST")){
-                    buffer = createHeader(messageType, (byte) 0x02, (byte) filename.length(), filename);
+                } else if (command.equalsIgnoreCase("DELETE")){
+                    filename = arg[1];
+                    
+                    buffer = createHeader(messageType, (byte) 2, (byte) filename.length(), filename);
 
                     bytes = buffer.array();
                     int size = buffer.limit();
                     out.write(bytes, 0, size); 
                     out.flush();
-                } else if (command.equalsIgnoreCase("DELETE")){
-                    filename = arg[1];
-                
-                    buffer = createHeader(messageType, (byte) 0x03, (byte) filename.length(), filename);
+                } else if (command.equalsIgnoreCase("GETFILESLIST")){
+                    buffer = createHeader(messageType, (byte) 3, (byte) filename.length(), filename);
 
                     bytes = buffer.array();
                     int size = buffer.limit();
@@ -133,7 +135,7 @@ public class client {
                 } else if (command.equalsIgnoreCase("GETFILE")){
                     filename = arg[1];
                 
-                    buffer = createHeader(messageType, (byte) 0x04, (byte) filename.length(), filename);
+                    buffer = createHeader(messageType, (byte) 4, (byte) filename.length(), filename);
 
                     bytes = buffer.array();
                     int size = buffer.limit();
@@ -152,7 +154,7 @@ public class client {
                 byte responseCommandId = buffer.get(1);
                 byte responseStatusCode = buffer.get(2);
 
-                 int sizeOfContent = 0;
+                int sizeOfContent = 0;
                 switch (command) {
                     case "GETFILELIST":
                         bytes = new byte[1];
