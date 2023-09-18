@@ -35,7 +35,7 @@ public class client {
     }
 
     public static int saveFile(String filename, String content) throws IOException {
-        String defaultPath = System.getProperty("user.dir") + "/AT01SocketsTCP/Q02/downloads";
+        String defaultPath = System.getProperty("user.dir") + "/downloads";
         File theDir = new File(defaultPath);
         if (!theDir.exists()) {
             theDir.mkdirs();
@@ -72,8 +72,16 @@ public class client {
                     System.out.println("Arquivo deletado com sucesso!");
                 break;
             case 3: // GETFILESLIST
+                if (statusCode == 2)
+                    System.out.println("Erro ao tentar listar arquivos. Message type: " + messageType);
+                else
+                    System.out.println("Arquivos listados com sucesso!");
                 break;
             case 4: // GETFILE
+                if (statusCode == 2)
+                    System.out.println("Erro ao tentar obter arquivo. Message type: " + messageType);
+                else
+                    System.out.println("Arquivo obtido com sucesso!");
                 break;
         }
     }
@@ -105,6 +113,12 @@ public class client {
                 
                 if (command.equalsIgnoreCase("ADDFILE")) {
                     filename = arg[1];
+
+                    if(arg.length < 3) {
+                        System.out.println("Faltam argumentos. Exemplo: ADDFILE <filename> <filesize>");
+                        continue;
+                    }
+
                     int fileSize = Integer.parseInt(arg[2]);
 
                     buffer = createHeader(messageType, (byte) 1, (byte) filename.length(), filename);
@@ -154,70 +168,76 @@ public class client {
                 byte responseCommandId = buffer.get(1);
                 byte responseStatusCode = buffer.get(2);
 
+                if(responseStatusCode == 2) {
+                    System.out.println("Erro ao executar comando ou não existe arquivos.");
+                    continue;
+                }
+
                 int sizeOfContent = 0;
-                switch (command) {
-                    case "GETFILELIST":
-                        bytes = new byte[1];
-                        byte[] numberOfFilesInBytes = new byte[2];
+                if(command.equalsIgnoreCase("GETFILESLIST")){
+                    bytes = new byte[1];
+                    byte[] numberOfFilesInBytes = new byte[2];
 
-                        for (int i = 0; i < 2; i++) {
-                            in.read(bytes);
-                            numberOfFilesInBytes[i] = bytes[0];
-                        }
-
-                        buffer = ByteBuffer.wrap(numberOfFilesInBytes);
-                        buffer.order(ByteOrder.BIG_ENDIAN);
-                        sizeOfContent = buffer.getShort();
-
-                        List<String> fileList = new ArrayList<String>();
-
-                        bytes = new byte[1];
-
-                        for (int i = 0; i < sizeOfContent; i++) {
-                            in.read(bytes);
-                            byte filenameLength = bytes[0];
-                            byte[] filenameNameInBytes = new byte[filenameLength];
-
-                            for (int j = 0; j < filenameLength; j++) {
-                                in.read(bytes);
-                                filenameNameInBytes[j] = bytes[0];
-                            }
-
-                            String name = new String(filenameNameInBytes);
-                            fileList.add(name);
-                        }
-
-                        System.out.printf("Quantidade de arquivos %d\n", fileList.size());
-
-                        for (String name : fileList) {
-                            System.out.println(name);
-                        }
-
-                        break;
-                    case "GETFILE":
+                    for (int i = 0; i < 2; i++) {
                         in.read(bytes);
-                        buffer = ByteBuffer.wrap(bytes);
-                        buffer.order(ByteOrder.BIG_ENDIAN);
-                        sizeOfContent = buffer.getInt();
+                        numberOfFilesInBytes[i] = bytes[0];
+                    }
 
-                        System.out.println("sizeOfContent: " + sizeOfContent);
+                    buffer = ByteBuffer.wrap(numberOfFilesInBytes);
+                    buffer.order(ByteOrder.BIG_ENDIAN);
+                    sizeOfContent = buffer.getShort();
 
-                        bytes = new byte[1];
-                        byte[] contentByte = new byte[sizeOfContent];
-                        for (int i = 0; i < sizeOfContent; i++) {
+                    List<String> fileList = new ArrayList<String>();
+
+                    bytes = new byte[1];
+
+                    for (int i = 0; i < sizeOfContent; i++) {
+                        in.read(bytes);
+                        byte filenameLength = bytes[0];
+                        byte[] filenameNameInBytes = new byte[filenameLength];
+
+                        for (int j = 0; j < filenameLength; j++) {
                             in.read(bytes);
-                            byte b = bytes[0];
-                            contentByte[i] = b;
+                            filenameNameInBytes[j] = bytes[0];
                         }
 
-                        String content = new String(contentByte);
-                        System.out.println(content);
-                        saveFile(filename, content);
+                        String name = new String(filenameNameInBytes);
+                        fileList.add(name);
+                    }
 
-                        break;
-                    default:
-                        printResponseStatusCode(responseCommandId, responseStatusCode, responseMessageType);
-                        break;
+                    System.out.printf("Quantidade de arquivos %d\n", fileList.size());
+
+                    for (String name : fileList) {
+                        System.out.println(name);
+                    }
+
+                } else if (command.equalsIgnoreCase("GETFILE")){
+                    in.read(bytes);
+                    buffer = ByteBuffer.wrap(bytes);
+                    buffer.order(ByteOrder.BIG_ENDIAN);
+                    sizeOfContent = buffer.getInt();
+
+                    System.out.println("sizeOfContent: " + sizeOfContent);
+
+                    bytes = new byte[1];
+                    byte[] contentByte = new byte[sizeOfContent];
+                    for (int i = 0; i < sizeOfContent; i++) {
+                        in.read(bytes);
+                        byte b = bytes[0];
+                        contentByte[i] = b;
+                    }
+
+                    String content = new String(contentByte);
+                    System.out.println(content);
+                    int status = saveFile(filename, content);
+
+                    if(status == 1)
+                        System.out.println("Arquivo salvo com sucesso!");
+                    else
+                        System.out.println("Erro ao salvar arquivo.");
+
+                } else {
+                    printResponseStatusCode(responseCommandId, responseStatusCode, responseMessageType);
                 }
             }
         } catch (UnknownHostException e) {

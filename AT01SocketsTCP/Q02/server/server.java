@@ -85,7 +85,7 @@ public class server {
                 case 2:
                     return "DELETE";
                 case 3:
-                    return "GETFILELIST";
+                    return "GETFILESLIST";
                 case 4:
                     return "GETFILE";
                 default:
@@ -163,7 +163,7 @@ public class server {
                             statusCode = 2;
                         }
                 
-                    } else if (command.equalsIgnoreCase("GETFILELIST")){
+                    } else if (command.equalsIgnoreCase("GETFILESLIST")){
                         System.out.println(this.currentPath);
                         File dir = new File(this.currentPath);
                         File[] arrayFiles = dir.listFiles();
@@ -176,8 +176,16 @@ public class server {
                                 fileList.add(f.getName());
                             }
                         }
-    
-                        getFilesListResponseContent = fileList;
+
+                        if(fileList.size() == 0) {
+                            logger.info("Nenhum arquivo encontrado");
+                            statusCode = 2;
+                        } else {
+                            logger.info("Arquivos encontrados: " + fileList.size());
+                            statusCode = 1;
+                            getFilesListResponseContent = fileList;
+                        }
+                    
                     } else if (command.equalsIgnoreCase("GETFILE")) {
                         byte[] response = null;
                         try {
@@ -195,6 +203,14 @@ public class server {
                             logger.warning("Erro ao obter arquivo: " + e.getMessage());
                             responseContent = response;
                         }
+
+                        if(responseContent == null) {
+                            logger.info("Nenhum arquivo encontrado");
+                            statusCode = 2;
+                        } else {
+                            logger.info("Arquivo encontrado");
+                            statusCode = 1;
+                        }
                     } else {
                         out.writeUTF("Comando inválido.");
                     }
@@ -210,68 +226,64 @@ public class server {
     
                     // Enviado conteudos do arquivos
                     logger.info("Enviando conteúdo");
-                    switch (command) {
-                        case "GETFILESLIST": 
-                            logger.info("Iniciando envio da resposta do comando GETFILELIST");
-                            int listOfFilesSize;
-                            if (getFilesListResponseContent == null)
-                                listOfFilesSize = 0;
-                            else
-                                listOfFilesSize = getFilesListResponseContent.size();
-    
-                            logger.info("Criando e adicionando dados no buffer");
-                            buffer = ByteBuffer.allocate(2);
-                            buffer.put((byte) ((listOfFilesSize >> 8) & 0xFF)); // INSERINDO BYTE MAIS SIGNIFICATIVO
-                            buffer.put((byte) (listOfFilesSize & 0xFF)); // INSERINDO BYTE MENOS SIGNIFICATIVO
-    
-                            bytes = buffer.array();
-                            size = buffer.limit();
-    
-                            out.write(bytes, 0, size);
+                    if(command.equalsIgnoreCase("GETFILESLIST")){
+                        logger.info("Iniciando envio da resposta do comando GETFILELIST");
+                        int listOfFilesSize;
+                        if (getFilesListResponseContent == null)
+                            listOfFilesSize = 0;
+                        else
+                            listOfFilesSize = getFilesListResponseContent.size();
+
+                        logger.info("Criando e adicionando dados no buffer");
+                        buffer = ByteBuffer.allocate(2);
+                        buffer.put((byte) ((listOfFilesSize >> 8) & 0xFF)); // INSERINDO BYTE MAIS SIGNIFICATIVO
+                        buffer.put((byte) (listOfFilesSize & 0xFF)); // INSERINDO BYTE MENOS SIGNIFICATIVO
+
+                        bytes = buffer.array();
+                        size = buffer.limit();
+
+                        out.write(bytes, 0, size);
+                        out.flush();
+
+                        for (String fileName : getFilesListResponseContent) {
+                            byte[] filenameInBytes = fileName.getBytes();
+                            byte filenameLength = (byte) fileName.length();
+
+                            out.write(filenameLength);
                             out.flush();
-    
-                            for (String fileName : getFilesListResponseContent) {
-                                byte[] filenameInBytes = fileName.getBytes();
-                                byte filenameLength = (byte) fileName.length();
-    
-                                out.write(filenameLength);
-                                out.flush();
-    
-                                logger.info("Enviando nomes dos arquivos byte a byte");
-                                for (int i = 0; i < filenameLength; i++) {
-                                    logger.info("Enviou byte: " + filenameInBytes[i]);
-                                    out.write(filenameInBytes[i]);
-                                    out.flush();
-                                }
-                            }
-    
-                            break;
-                        case "GETFILE":
-                            logger.info("Iniciando envio da resposta do comando GETFILE");
-                            int sizeResponseContent;
-                            if (responseContent == null)
-                                sizeResponseContent = 0;
-                            else
-                                sizeResponseContent = responseContent.length;
-    
-                            logger.info("Criando e adicionando dados no buffer");
-                            buffer = ByteBuffer.allocate(4);
-                            buffer.order(ByteOrder.BIG_ENDIAN);
-                            buffer.putInt(sizeResponseContent);
-                            bytes = buffer.array();
-                            size = buffer.limit();
-                            out.write(bytes, 0, size);
-                            out.flush();
-    
-                            logger.info("Enviando conteúdo do arquivo byte a byte");
-                            for (int i = 0; i < sizeResponseContent; i++) {
-                                logger.info("Enviou byte: " + responseContent[i]);
-                                out.write(responseContent[i]);
+
+                            logger.info("Enviando nomes dos arquivos byte a byte");
+                            for (int i = 0; i < filenameLength; i++) {
+                                logger.info("Enviou byte: " + filenameInBytes[i]);
+                                out.write(filenameInBytes[i]);
                                 out.flush();
                             }
-    
-                            break;
-    
+                        }
+                    } else if (command.equalsIgnoreCase("GETFILE")) {
+                        logger.info("Iniciando envio da resposta do comando GETFILE");
+                        int sizeResponseContent;
+                        if (responseContent == null)
+                            sizeResponseContent = 0;
+                        else
+                            sizeResponseContent = responseContent.length;
+
+                        logger.info("Criando e adicionando dados no buffer");
+                        buffer = ByteBuffer.allocate(4);
+                        buffer.order(ByteOrder.BIG_ENDIAN);
+                        buffer.putInt(sizeResponseContent);
+                        bytes = buffer.array();
+                        size = buffer.limit();
+                        out.write(bytes, 0, size);
+                        out.flush();
+
+                        logger.info("Enviando conteúdo do arquivo byte a byte");
+                        for (int i = 0; i < sizeResponseContent; i++) {
+                            logger.info("Enviou byte: " + responseContent[i]);
+                            out.write(responseContent[i]);
+                            out.flush();
+                        }
+                    } else {
+                        break;
                     }
                 }
             } catch (EOFException e) {
