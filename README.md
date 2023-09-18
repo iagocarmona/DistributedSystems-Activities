@@ -1,5 +1,6 @@
 # DistributedSystems-Activities
 
+---
 ## :mortar_board: Autor
 
 <center>

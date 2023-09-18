@@ -1,5 +1,15 @@
 package AT01SocketsTCP.Q01.client;
 
+/**
+ * Descrição: Cliente para conexao TCP
+ * Descricao: Envia uma informacao ao servidor e recebe confirmações UTF-8.
+ * 
+ * Autor: Iago Ortega Carmona
+ * 
+ * Data de criação: 05/09/2023
+ * Data última atualização: 18/09/2023
+ */
+
 import java.net.*;
 import java.io.*;
 

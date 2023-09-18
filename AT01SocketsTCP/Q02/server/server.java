@@ -7,7 +7,7 @@ package AT01SocketsTCP.Q02.server;
  * Autor: Iago Ortega Carmona
  * 
  * Data de criação: 05/09/2023
- * Data última atualização: 15/09/2023
+ * Data última atualização: 18/09/2023
  */
 
 import java.net.*;

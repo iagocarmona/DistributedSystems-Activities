@@ -1,5 +1,15 @@
 package AT01SocketsTCP.Q01.server;
 
+/**
+ * Descrição: Servidor para conexao TCP
+ * Descricao: Recebe uma informacao do cliente e envia confirmações UTF-8.
+ * 
+ * Autor: Iago Ortega Carmona
+ * 
+ * Data de criação: 06/09/2023
+ * Data última atualização: 18/09/2023
+ */
+
 import java.net.*;
 import java.io.*;
 
@@ -31,6 +41,15 @@ public class server {
         }
     }
 
+    /**
+     * Descrição: Connection para conexao TCP
+     * Descricao: Classe para tratar as conexões com os clientes.
+     * 
+     * Autor: Iago Ortega Carmona
+     * 
+     * Data de criação: 06/09/2023
+     * Data última atualização: 18/09/2023
+     */
     static class Connection extends Thread {
         DataInputStream in;
         DataOutputStream out;
@@ -111,12 +130,14 @@ public class server {
                             out.writeUTF("NOT_AUTHENTICATED");
                             continue;  
                         }
-
+                        // Obtenha a lista de arquivos do diretório atual
                         File currentDir = new File(System.getProperty("user.dir"));
                         File[] files = currentDir.listFiles();
 
                         String filesList = "";
                         Integer filesCount = 0;
+
+                        // Percorra a lista de arquivos e adicione apenas os arquivos
                         for (File file : files) {
                             if (file.isFile()){
                                 filesList += file.getName() + "\n";
@@ -131,9 +152,12 @@ public class server {
                             continue;  
                         }
 
+                        // Obtenha a lista de arquivos do diretório atual
                         File currentDir = new File(System.getProperty("user.dir"));
                         File[] files = currentDir.listFiles();
 
+
+                        // Percorra a lista de arquivos e adicione apenas os diretórios
                         String filesList = "";
                         Integer dirsCount = 0;
                         for (File file : files) {
@@ -162,6 +186,16 @@ public class server {
             }
         }
     }
+
+    /**
+     * Descrição: User para conexao TCP
+     * Descricao: Classe para armazenar os dados do usuário.
+     * 
+     * Autor: Iago Ortega Carmona
+     * 
+     * Data de criação: 06/09/2023
+     * Data última atualização: 18/09/2023
+     */
 
     static class User {
         String name;
