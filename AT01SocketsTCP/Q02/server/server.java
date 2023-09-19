@@ -104,6 +104,29 @@ public class server {
     
             return header;
         }
+
+        public static int saveFile(String filename, String content) throws IOException {
+            String defaultPath = System.getProperty("user.dir") + "/files";
+            File theDir = new File(defaultPath);
+            if (!theDir.exists()) {
+                theDir.mkdirs();
+            }
+    
+            String path = defaultPath + "/" + filename;
+            File file = new File(path);
+    
+            if (file.createNewFile()) {
+                FileWriter writer = new FileWriter(path, true);
+                BufferedWriter buffer = new BufferedWriter(writer);
+                buffer.write(content);
+                buffer.flush();
+                buffer.close();
+    
+                return 1;
+            } else {
+                return 0;
+            }
+        }
     
         @Override
         public void run() {
@@ -132,23 +155,24 @@ public class server {
                     List<String> getFilesListResponseContent = null;
                     
                     if (command.equalsIgnoreCase("ADDFILE")) {
-                        String path = this.currentPath + "/" + filename;
-                        File file = new File(path);
-                
-                        if (file.createNewFile()) {
-                            FileWriter writer = new FileWriter(path, true);
-                            logger.info("Criando arquivo");
-                            BufferedWriter buffer = new BufferedWriter(writer);
-                            logger.info("Escrevendo conteúdo no arquivo");
-                            buffer.write("Teste de conteúdo");
-                            buffer.flush();
-                            buffer.close();
-                            logger.info("Arquivo criado com sucesso");
-                            statusCode = 1;
-                        } else {
-                            logger.warning("Erro ao criar arquivo");
-                            statusCode = 2;
+                        int sizeOfContent = header.getInt(filenameSize + 3);
+
+                        bytes = new byte[1];
+                        byte[] contentByte = new byte[sizeOfContent];
+                        for (int i = 0; i < sizeOfContent; i++) {
+                            in.read(bytes);
+                            contentByte[i] = bytes[0];
                         }
+
+                        String content = new String(contentByte);
+                        System.out.println(content);
+                        statusCode = (byte) saveFile(filename, content);
+
+                        if(statusCode == 1)
+                            logger.info("Arquivo salvo com sucesso!");
+                        else
+                            logger.info("Erro ao salvar arquivo.");
+
                     } else if (command.equalsIgnoreCase("DELETE")) {
                         String path = this.currentPath + "/" + filename;
                         File file = new File(path);

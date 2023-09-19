@@ -1,20 +1,16 @@
-set 18, 2023 11:33:36 PM AT01SocketsTCP.Q02.server.server$Connection <init>
+set 18, 2023 11:47:10 PM AT01SocketsTCP.Q02.server.server$Connection <init>
 INFORMAÇÕES: Cliente se conectou
-set 18, 2023 11:33:36 PM AT01SocketsTCP.Q02.server.server$Connection run
+set 18, 2023 11:47:10 PM AT01SocketsTCP.Q02.server.server$Connection run
 INFORMAÇÕES: Criando e configurando header
-set 18, 2023 11:33:48 PM AT01SocketsTCP.Q02.server.server$Connection run
-INFORMAÇÕES: Criando arquivo
-set 18, 2023 11:33:48 PM AT01SocketsTCP.Q02.server.server$Connection run
-INFORMAÇÕES: Escrevendo conteúdo no arquivo
-set 18, 2023 11:33:48 PM AT01SocketsTCP.Q02.server.server$Connection run
-INFORMAÇÕES: Arquivo criado com sucesso
-set 18, 2023 11:33:48 PM AT01SocketsTCP.Q02.server.server$Connection run
+set 18, 2023 11:47:16 PM AT01SocketsTCP.Q02.server.server$Connection run
+INFORMAÇÕES: Arquivo salvo com sucesso!
+set 18, 2023 11:47:16 PM AT01SocketsTCP.Q02.server.server$Connection run
 INFORMAÇÕES: Enviando header de resposta de tamanho fixo
-set 18, 2023 11:33:48 PM AT01SocketsTCP.Q02.server.server$Connection createResponseHeader
+set 18, 2023 11:47:16 PM AT01SocketsTCP.Q02.server.server$Connection createResponseHeader
 INFORMAÇÕES: ResponseHeader criado
-set 18, 2023 11:33:48 PM AT01SocketsTCP.Q02.server.server$Connection run
+set 18, 2023 11:47:16 PM AT01SocketsTCP.Q02.server.server$Connection run
 INFORMAÇÕES: Enviando conteúdo
-set 18, 2023 11:33:48 PM AT01SocketsTCP.Q02.server.server$Connection run
+set 18, 2023 11:47:16 PM AT01SocketsTCP.Q02.server.server$Connection run
 INFORMAÇÕES: Fechando conexão
-set 18, 2023 11:33:48 PM AT01SocketsTCP.Q02.server.server$Connection run
+set 18, 2023 11:47:16 PM AT01SocketsTCP.Q02.server.server$Connection run
 INFORMAÇÕES: Comunicação finalizada.
