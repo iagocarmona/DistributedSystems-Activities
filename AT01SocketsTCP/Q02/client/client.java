@@ -89,6 +89,8 @@ public class client {
     public static void main(String args[]) {
         Socket s = null;
         Scanner reader = new Scanner(System.in);
+
+        String currentPath = System.getProperty("user.dir") + "/files";
         try {
             int serverPort = 7896;   /* especifica a porta */
             String ip = "localhost";
@@ -114,12 +116,17 @@ public class client {
                 if (command.equalsIgnoreCase("ADDFILE")) {
                     filename = arg[1];
 
-                    if(arg.length < 3) {
-                        System.out.println("Faltam argumentos. Exemplo: ADDFILE <filename> <filesize>");
-                        continue;
-                    }
+                    String path = currentPath + "/" + filename;
+                    File file = new File(path);
 
-                    int fileSize = Integer.parseInt(arg[2]);
+                    System.out.println("Obtendo conteúdo do arquivo");
+                    FileInputStream inputStream = new FileInputStream(file);
+                    byte[] response = inputStream.readAllBytes();
+                    inputStream.close();
+
+                    int fileSize = response.length;
+
+                    System.out.println("Tamanho do arquivo: " + fileSize + " bytes");
 
                     buffer = createHeader(messageType, (byte) 1, (byte) filename.length(), filename);
                     buffer.putInt(fileSize);
@@ -127,9 +134,14 @@ public class client {
 
                     bytes = new byte[buffer.remaining()];
                     buffer.get(bytes); 
-
                     out.write(bytes);
                     out.flush();
+
+                    System.out.println("Enviando arquivo byte a byte");
+                    for (int i = 0; i < fileSize; i++) {
+                        out.write(response[i]);
+                        out.flush();
+                    }
                 } else if (command.equalsIgnoreCase("DELETE")){
                     filename = arg[1];
                     
