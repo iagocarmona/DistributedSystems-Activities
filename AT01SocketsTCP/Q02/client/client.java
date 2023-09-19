@@ -3,7 +3,7 @@ package AT01SocketsTCP.Q02.client;
 
 /**
  * Descrição: Cliente para conexao TCP
- * Descricao: Envia uma informacao ao servidor e recebe confirmações ECHO.
+ * Descricao: Envia uma informacao ao servidor e recebe confirmações ECHO e salva informações no arquivo tcp.log.
  * 
  * Autor: Iago Ortega Carmona
  * 

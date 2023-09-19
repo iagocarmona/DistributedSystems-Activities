@@ -1,20 +1,21 @@
 ## Atividade 01 - Questão 01
+---
 
 ### Como compilar
-- Server: 
+- **Server**: 
     - Entre na pasta `server`, executando `cd server`
     - Execute `javac server.java`
 
-- Cliente: 
+- **Cliente**: 
     - Entre na pasta `client`, executando `cd client`
     - Execute `javac client.java`
 
 ### Como executar
-- Server: 
+- **Server**: 
     - Entre na pasta `server`, executando `cd server`
     - Execute `java server.java`
 
-- Cliente: 
+- **Cliente**: 
     - Entre na pasta `client`, executando `cd client`
     - Execute `java client.java`
 
@@ -25,19 +26,22 @@
 
 ### Exemplo de uso
 - Como executar **CONNECT user,password**
-    execute: CONNECT `usuario`,`passoword`
-
+    execute: `CONNECT usuario,passoword`
+    **Usuarios cadastrados**: 
+    - user,user
+    - admin,admin
+    
 - Como executar **PWD**
-    execute: PWD
+    execute: `PWD`
 
 - Como executar **CHDIR path**
-    execute: CHDIR `<caminho_do_arquivo>`
+    execute: `CHDIR <caminho_do_arquivo>`
 
 - Como executar **GETFILES**
-    execute: GETFILES
+    execute: `GETFILES`
 
 - Como executar **GETDIRS**
-    execute: GETDIRS
+    execute: `GETDIRS`
 
 - Como executar **EXIT**
-    execute: EXIT
+    execute: `EXIT`

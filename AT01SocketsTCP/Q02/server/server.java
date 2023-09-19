@@ -307,7 +307,7 @@ public class server {
                             out.flush();
                         }
                     } else {
-                        break;
+                        continue;
                     }
                 }
             } catch (EOFException e) {
