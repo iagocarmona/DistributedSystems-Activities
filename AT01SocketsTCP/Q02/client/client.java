@@ -8,7 +8,7 @@ package AT01SocketsTCP.Q02.client;
  * Autor: Iago Ortega Carmona
  * 
  * Data de criação: 05/09/2023
- * Data última atualização: 15/09/2023
+ * Data última atualização: 19/09/2023
  */
 
 import java.nio.ByteBuffer;
@@ -21,6 +21,14 @@ import java.io.*;
 
 public class client {
 
+    /**
+     * Cria o header da requisição
+     * @param messageType
+     * @param commandId
+     * @param filenameSize
+     * @param filename
+     * @return
+     */
     public static ByteBuffer createHeader(byte messageType, byte commandId, byte filenameSize, String filename) {
         ByteBuffer header = ByteBuffer.allocate(259); 
         header.order(ByteOrder.BIG_ENDIAN);
@@ -34,6 +42,13 @@ public class client {
         return header;
     }
 
+    /**
+     * Salva o arquivo no diretório downloads
+     * @param filename
+     * @param content
+     * @return
+     * @throws IOException
+     */
     public static int saveFile(String filename, String content) throws IOException {
         String defaultPath = System.getProperty("user.dir") + "/downloads";
         File theDir = new File(defaultPath);
@@ -57,6 +72,12 @@ public class client {
         }
     }
 
+    /**
+     * Imprime o status code da resposta
+     * @param commandId
+     * @param statusCode
+     * @param messageType
+     */
     public static void printResponseStatusCode(byte commandId, byte statusCode, byte messageType) {
         switch (commandId) {
             case 1: // ADDFILE
@@ -86,6 +107,10 @@ public class client {
         }
     }
     
+    /**
+     * Método principal
+     * @param args
+     */
     public static void main(String args[]) {
         Socket s = null;
         Scanner reader = new Scanner(System.in);
@@ -107,6 +132,7 @@ public class client {
                 keyboardBuffer = reader.nextLine();  /* aguarda o envio de dados */
                 String[] arg = keyboardBuffer.split(" ");
 
+                // Verificando se o comando é válido
                 String command = arg[0];
                 String filename = "";
                 byte messageType = 1;
@@ -119,6 +145,7 @@ public class client {
                     String path = currentPath + "/" + filename;
                     File file = new File(path);
 
+                    // Verificando se o arquivo existe e obtendo conteúdo
                     System.out.println("Obtendo conteúdo do arquivo");
                     FileInputStream inputStream = new FileInputStream(file);
                     byte[] response = inputStream.readAllBytes();
@@ -128,10 +155,12 @@ public class client {
 
                     System.out.println("Tamanho do arquivo: " + fileSize + " bytes");
 
+                    // Criando header de requisição
                     buffer = createHeader(messageType, (byte) 1, (byte) filename.length(), filename);
                     buffer.putInt(fileSize);
                     buffer.flip();
 
+                    // Enviando header
                     bytes = new byte[buffer.remaining()];
                     buffer.get(bytes); 
                     out.write(bytes);
@@ -145,6 +174,7 @@ public class client {
                 } else if (command.equalsIgnoreCase("DELETE")){
                     filename = arg[1];
                     
+                    // Criando header de requisição
                     buffer = createHeader(messageType, (byte) 2, (byte) filename.length(), filename);
 
                     bytes = buffer.array();
@@ -152,6 +182,7 @@ public class client {
                     out.write(bytes, 0, size); 
                     out.flush();
                 } else if (command.equalsIgnoreCase("GETFILESLIST")){
+                    // Criando header de requisição
                     buffer = createHeader(messageType, (byte) 3, (byte) filename.length(), filename);
 
                     bytes = buffer.array();
@@ -161,6 +192,7 @@ public class client {
                 } else if (command.equalsIgnoreCase("GETFILE")){
                     filename = arg[1];
                 
+                    // Criando header de requisição
                     buffer = createHeader(messageType, (byte) 4, (byte) filename.length(), filename);
 
                     bytes = buffer.array();
@@ -174,27 +206,33 @@ public class client {
                 // Aguardando resposta do servidor
                 in.read(bytes);
 
+                // Lendo header de resposta
                 buffer = ByteBuffer.wrap(bytes);
                 buffer.order(ByteOrder.BIG_ENDIAN);
                 byte responseMessageType = buffer.get(0);
                 byte responseCommandId = buffer.get(1);
                 byte responseStatusCode = buffer.get(2);
 
+                // Verificando se o comando foi executado com sucesso
                 if(responseStatusCode == 2) {
                     System.out.println("Erro ao executar comando ou não existe arquivos.");
                     continue;
                 }
 
                 int sizeOfContent = 0;
+
+                // Lendo conteúdo da resposta
                 if(command.equalsIgnoreCase("GETFILESLIST")){
                     bytes = new byte[1];
                     byte[] numberOfFilesInBytes = new byte[2];
 
+                    // Lendo tamanho do conteúdo
                     for (int i = 0; i < 2; i++) {
                         in.read(bytes);
                         numberOfFilesInBytes[i] = bytes[0];
                     }
 
+                    // Convertendo tamanho do conteúdo para short
                     buffer = ByteBuffer.wrap(numberOfFilesInBytes);
                     buffer.order(ByteOrder.BIG_ENDIAN);
                     sizeOfContent = buffer.getShort();
@@ -203,6 +241,7 @@ public class client {
 
                     bytes = new byte[1];
 
+                    // Lendo conteúdo
                     for (int i = 0; i < sizeOfContent; i++) {
                         in.read(bytes);
                         byte filenameLength = bytes[0];
@@ -219,6 +258,7 @@ public class client {
 
                     System.out.printf("Quantidade de arquivos %d\n", fileList.size());
 
+                    // Imprimindo conteúdo
                     for (String name : fileList) {
                         System.out.println(name);
                     }
@@ -231,6 +271,7 @@ public class client {
 
                     System.out.println("sizeOfContent: " + sizeOfContent);
 
+                    // Lendo conteúdo
                     bytes = new byte[1];
                     byte[] contentByte = new byte[sizeOfContent];
                     for (int i = 0; i < sizeOfContent; i++) {
@@ -239,6 +280,7 @@ public class client {
                         contentByte[i] = b;
                     }
 
+                    // Convertendo conteúdo para string
                     String content = new String(contentByte);
                     System.out.println(content);
                     int status = saveFile(filename, content);
@@ -249,6 +291,7 @@ public class client {
                         System.out.println("Erro ao salvar arquivo.");
 
                 } else {
+                    // Imprimindo resposta
                     printResponseStatusCode(responseCommandId, responseStatusCode, responseMessageType);
                 }
             }

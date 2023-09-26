@@ -22,6 +22,12 @@ Bibliotecas usadas
 - java.net.*;
 - java.io.*;
 - java.security.MessageDigest;
+- java.nio.ByteBuffer;
+- java.nio.ByteOrder;
+- java.util.ArrayList;
+- java.util.Arrays;
+- java.util.List;
+- java.util.logging.*;
 
 Exemplo de uso
 - Como executar ADDFILE

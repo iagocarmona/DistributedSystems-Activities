@@ -7,7 +7,7 @@ package AT01SocketsTCP.Q02.server;
  * Autor: Iago Ortega Carmona
  * 
  * Data de criação: 05/09/2023
- * Data última atualização: 18/09/2023
+ * Data última atualização: 19/09/2023
  */
 
 import java.net.*;
@@ -17,10 +17,14 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
 import java.util.logging.*;
 
 public class server {
+
+    /**
+     * Método main
+     * @param args
+     */
     public static void main (String args[]) {
         try {
             int serverPort = 7896; // porta do servidor
@@ -50,19 +54,25 @@ public class server {
     
         String currentPath;
 
+        // LOGGER
         private static final Logger logger = Logger.getLogger("tcp");
     
+        /**
+         * Construtor da classe Connection
+         * @param ClientSocket
+         */
         public Connection(Socket ClientSocket) {
             try {
                 FileHandler fileHandler = new FileHandler("./tcp.log");
                 fileHandler.setFormatter(new SimpleFormatter());
                 logger.addHandler(fileHandler);
                 
-    
+                
                 this.clientSocket = ClientSocket;
                 in = new DataInputStream(clientSocket.getInputStream());
                 out = new DataOutputStream(clientSocket.getOutputStream());
     
+                // Criando diretório files
                 File filesDir = new File("./files");
                 if (!filesDir.exists()) {
                     filesDir.mkdirs();
@@ -71,6 +81,7 @@ public class server {
                 logger.info("Cliente se conectou");
                 System.out.println("Cliente se conectou");
     
+                // Definindo diretório atual
                 this.currentPath = System.getProperty("user.dir") + "/files";
             } catch (IOException e) {
                 logger.info("Connection: " + e.getMessage());
@@ -78,6 +89,11 @@ public class server {
             }
         }
     
+        /**
+         * Retorna o comando de acordo com o byte recebido
+         * @param commandId
+         * @return
+         */
         public static String getCommandByByte(byte commandId) {
             switch (commandId) {
                 case 1:
@@ -92,7 +108,13 @@ public class server {
                     return "UNKNOWN";
             }
         }
-    
+        /**
+         * Cria um cabeçalho de resposta
+         * @param messageType
+         * @param commandId
+         * @param statusCode
+         * @return
+         */
         public ByteBuffer createResponseHeader(byte messageType, byte commandId, byte statusCode) {
             ByteBuffer header = ByteBuffer.allocate(3);
             header.order(ByteOrder.BIG_ENDIAN);
@@ -105,6 +127,13 @@ public class server {
             return header;
         }
 
+        /**
+         * Salva um arquivo no diretório files
+         * @param filename
+         * @param content
+         * @return
+         * @throws IOException
+         */
         public static int saveFile(String filename, String content) throws IOException {
             String defaultPath = System.getProperty("user.dir") + "/files";
             File theDir = new File(defaultPath);
@@ -139,24 +168,29 @@ public class server {
                     byte[] bytes = new byte[headerSize];
                     this.in.read(bytes);
     
+                    // Lendo header
                     ByteBuffer header = ByteBuffer.wrap(bytes);
                     header.order(ByteOrder.BIG_ENDIAN);
     
+                    // Obtendo informações do header
                     byte messageType = header.get(0);
                     byte commandId = header.get(1);
                     byte filenameSize = header.get(2);
                     byte[] byteFilename = Arrays.copyOfRange(bytes, 3, filenameSize + 3);
                     String filename = new String(byteFilename);
     
+                    // Obtendo comando
                     String command = getCommandByByte(commandId);
     
                     byte statusCode = 2;
                     byte[] responseContent = null;
                     List<String> getFilesListResponseContent = null;
                     
+                    // Executando comando
                     if (command.equalsIgnoreCase("ADDFILE")) {
                         int sizeOfContent = header.getInt(filenameSize + 3);
 
+                        // Lendo conteúdo do arquivo
                         bytes = new byte[1];
                         byte[] contentByte = new byte[sizeOfContent];
                         for (int i = 0; i < sizeOfContent; i++) {
@@ -164,6 +198,7 @@ public class server {
                             contentByte[i] = bytes[0];
                         }
 
+                        // Convertendo conteúdo para String
                         String content = new String(contentByte);
                         System.out.println(content);
                         statusCode = (byte) saveFile(filename, content);
@@ -177,6 +212,7 @@ public class server {
                         String path = this.currentPath + "/" + filename;
                         File file = new File(path);
                 
+                        // Deletando arquivo
                         if (file.exists()) {
                             if (file.delete()) {
                                 logger.info("Arquivo deletado com sucesso");
@@ -188,6 +224,7 @@ public class server {
                         }
                 
                     } else if (command.equalsIgnoreCase("GETFILESLIST")){
+                        // Obtendo lista de arquivos
                         System.out.println(this.currentPath);
                         File dir = new File(this.currentPath);
                         File[] arrayFiles = dir.listFiles();
@@ -201,6 +238,7 @@ public class server {
                             }
                         }
 
+                        // Verificando se existem arquivos
                         if(fileList.size() == 0) {
                             logger.info("Nenhum arquivo encontrado");
                             statusCode = 2;
@@ -209,9 +247,9 @@ public class server {
                             statusCode = 1;
                             getFilesListResponseContent = fileList;
                         }
-                    
                     } else if (command.equalsIgnoreCase("GETFILE")) {
                         byte[] response = null;
+                        // Obtendo conteúdo do arquivo
                         try {
                             String path = this.currentPath + "/" + filename;
                             File file = new File(path);
@@ -228,6 +266,7 @@ public class server {
                             responseContent = response;
                         }
 
+                        // Verificando se o arquivo existe
                         if(responseContent == null) {
                             logger.info("Nenhum arquivo encontrado");
                             statusCode = 2;
@@ -263,16 +302,18 @@ public class server {
                         buffer.put((byte) ((listOfFilesSize >> 8) & 0xFF)); // INSERINDO BYTE MAIS SIGNIFICATIVO
                         buffer.put((byte) (listOfFilesSize & 0xFF)); // INSERINDO BYTE MENOS SIGNIFICATIVO
 
+                        // Enviando tamanho da lista de arquivos
                         bytes = buffer.array();
                         size = buffer.limit();
-
                         out.write(bytes, 0, size);
                         out.flush();
 
+                        // Enviando nomes dos arquivos
                         for (String fileName : getFilesListResponseContent) {
                             byte[] filenameInBytes = fileName.getBytes();
                             byte filenameLength = (byte) fileName.length();
 
+                            // Enviando tamanho do nome do arquivo
                             out.write(filenameLength);
                             out.flush();
 
@@ -291,6 +332,7 @@ public class server {
                         else
                             sizeResponseContent = responseContent.length;
 
+                        // Enviando tamanho do conteúdo do arquivo
                         logger.info("Criando e adicionando dados no buffer");
                         buffer = ByteBuffer.allocate(4);
                         buffer.order(ByteOrder.BIG_ENDIAN);
@@ -300,6 +342,7 @@ public class server {
                         out.write(bytes, 0, size);
                         out.flush();
 
+                        // Enviando conteúdo do arquivo byte a byte
                         logger.info("Enviando conteúdo do arquivo byte a byte");
                         for (int i = 0; i < sizeResponseContent; i++) {
                             logger.info("Enviou byte: " + responseContent[i]);
@@ -317,6 +360,7 @@ public class server {
                 logger.info("I/O Exception: " + e.getMessage());
                 System.out.println("Erro de leitura: " + e.getMessage());
             } finally {
+                // Fechando conexão
                 try {
                     logger.info("Fechando conexão");
                     in.close();

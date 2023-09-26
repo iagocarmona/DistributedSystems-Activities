@@ -7,7 +7,7 @@ package AT01SocketsTCP.Q01.server;
  * Autor: Iago Ortega Carmona
  * 
  * Data de criação: 06/09/2023
- * Data última atualização: 18/09/2023
+ * Data última atualização: 19/09/2023
  */
 
 import java.net.*;
@@ -18,6 +18,10 @@ import java.security.MessageDigest;
 public class server {
     public static server.User[] users;
 
+    /**
+     * Descrição: main para conexao TCP
+     * @param args
+     */
     public static void main (String args[]) {
         try {
             users = new server.User[] {
@@ -48,13 +52,17 @@ public class server {
      * Autor: Iago Ortega Carmona
      * 
      * Data de criação: 06/09/2023
-     * Data última atualização: 18/09/2023
+     * Data última atualização: 19/09/2023
      */
     static class Connection extends Thread {
         DataInputStream in;
         DataOutputStream out;
         Socket clientSocket;
 
+        /**
+         * Descrição: Connection para conexao TCP
+         * @param aClientSocket
+         */
         public Connection(Socket aClientSocket) {
             try {
                 clientSocket = aClientSocket;
@@ -66,6 +74,9 @@ public class server {
             }
         }
 
+        /**
+         * Descrição: run para conexao TCP
+         */
         public void run() {
             try {
                 boolean isUserAuthenticated = false;
@@ -73,40 +84,47 @@ public class server {
                     String data = in.readUTF();   /* aguarda o envio de dados */
                     String[] command = data.split(" ");
                     
+                    // Verifique se o usuário está autenticado
                     if (command[0].equalsIgnoreCase("connect")) {
                         String[] credentials = command[1].split(",");
 
+                        // Verifique se o usuário existe
                         for (User user : users) {
+                            // Verifique se as credenciais são válidas
                             if (user.authenticate(credentials[0], credentials[1])) {
                                 isUserAuthenticated = true;
                                 break;
                             }
                         }
 
+                        // Envie a resposta para o cliente
                         if (isUserAuthenticated) {
                             out.writeUTF("SUCCESS");
                         } else {
                             out.writeUTF("ERROR");
                         }
-                    } else if (command[0].equalsIgnoreCase("pwd")) {
+                    } else if (command[0].equalsIgnoreCase("pwd")) { // Verifique se o comando é "pwd"
+                        // Verifique se o usuário está autenticado
                         if (!isUserAuthenticated) {
                             out.writeUTF("NOT_AUTHENTICATED");
                             continue;  
                         }
 
                         out.writeUTF(System.getProperty("user.dir"));
-                    } else if (command[0].equalsIgnoreCase("chdir")){
+                    } else if (command[0].equalsIgnoreCase("chdir")){ // Verifique se o comando é "chdir"
+
+                        // Verifique se o usuário está autenticado
                         if (!isUserAuthenticated) {
                             out.writeUTF("NOT_AUTHENTICATED");
                             continue;  
                         }
-
                         String path = command[1];
 
                         // Verifique se o caminho é ".." para voltar um diretório
                         if (path.equals("..")) {
                             File currentDir = new File(System.getProperty("user.dir"));
                             String parentDir = currentDir.getParent();
+                            // Verifique se o diretório pai existe
                             if (parentDir != null) {
                                 System.setProperty("user.dir", parentDir);
                                 out.writeUTF("SUCCESS");
@@ -125,7 +143,7 @@ public class server {
                                 out.writeUTF("ERROR");
                             }
                         }
-                    } else if (command[0].equalsIgnoreCase("getfiles")) {
+                    } else if (command[0].equalsIgnoreCase("getfiles")) { // Verifique se o comando é "getfiles"
                         if (!isUserAuthenticated) {
                             out.writeUTF("NOT_AUTHENTICATED");
                             continue;  
@@ -134,10 +152,10 @@ public class server {
                         File currentDir = new File(System.getProperty("user.dir"));
                         File[] files = currentDir.listFiles();
 
+                        // Percorra a lista de arquivos e adicione apenas os arquivos
                         String filesList = "";
                         Integer filesCount = 0;
 
-                        // Percorra a lista de arquivos e adicione apenas os arquivos
                         for (File file : files) {
                             if (file.isFile()){
                                 filesList += file.getName() + "\n";
@@ -146,7 +164,7 @@ public class server {
                         }
 
                         out.writeUTF(filesCount + "\n" + filesList);
-                    } else if (command[0].equalsIgnoreCase("getdirs")) {
+                    } else if (command[0].equalsIgnoreCase("getdirs")) { // Verifique se o comando é "getdirs"
                         if (!isUserAuthenticated) {
                             out.writeUTF("NOT_AUTHENTICATED");
                             continue;  
