@@ -270,13 +270,15 @@ class ReceiveDatagramThread extends Thread {
             case 4:
                 System.out.println("\n" + nickname + " <ECHO>: " + message + "\n");
                 break;
+            case 5:
+                System.out.println("\n" + nickname + " <ECHO>: " + message + "\n");
+                break;
         }
     }
 
     @Override
-    public void run() {
+    public void run(){
         try {
-            boolean hasReceivedEcho = false;
 
             while (true) {
                 // Cria o buffer para receber o datagrama
@@ -291,19 +293,16 @@ class ReceiveDatagramThread extends Thread {
                 byte messageType = getMessageType(buffer);
                 String nickname = getNickName(buffer);
                 String message = getMessage(buffer);
+                
+                // Imprime a mensagem recebida
+                printMessage(message, messageType, nickname);
 
-                // Verifica se a mensagem recebida é um "echo" do outro usuário
-                if (messageType == 4 && !nickname.equals(myNickname) && !hasReceivedEcho) {
-                    // Marca que recebeu um "echo"
-                    hasReceivedEcho = true;
-                    // Imprime a mensagem recebida
-                    printMessage(message, messageType, nickname);
-
-                    // Cria o datagrama com a mensagem de "echo" de volta para o remetente
+                if (messageType == 4){
+                    // Cria o datagrama com a mensagem
                     ByteBuffer echoBuffer = ByteBuffer.allocate(322);
-                    echoBuffer.put((byte) 4);
-                    echoBuffer.put((byte) myNickname.length());
-                    echoBuffer.put(myNickname.getBytes());
+                    echoBuffer.put((byte) 5);
+                    echoBuffer.put((byte) nickname.length());
+                    echoBuffer.put(nickname.getBytes());
                     echoBuffer.put((byte) message.length());
                     echoBuffer.put(message.getBytes());
 
@@ -311,16 +310,9 @@ class ReceiveDatagramThread extends Thread {
                     DatagramPacket echoPacket = new DatagramPacket(echoBuffer.array(), echoBuffer.array().length, serverAddr, serverPort);
                     dgramSocket.send(echoPacket);
                 }
-
-                // Imprime a mensagem normalmente
-                if (messageType != 4) {
-                    printMessage(message, messageType, nickname);
-                    hasReceivedEcho = false;
-                }
             }
         } catch (Exception e) {
             System.out.println("IOException: " + e.getMessage());
         } 
     }
-
 }
