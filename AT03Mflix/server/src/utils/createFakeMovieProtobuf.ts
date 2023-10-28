@@ -8,19 +8,19 @@ export function createFakeMovieProtobuf(){
   genre.setName("genre 1")
 
   const cast = new Cast();
-  cast.setActor("jhonatan");
+  cast.setActor("Jake Paul");
 
   const country = new Country();
   country.setName("country")
 
   const director = new Director();
-  director.setName("diretor jhonatan")
+  director.setName("diretor Cameron Dias")
 
   const language = new Language();
   language.setName("Portugues");
 
   const writer = new Writer();
-  writer.setName("soneca");
+  writer.setName("James Wilson");
 
   fakeProtoMovie.setPlot("plot");
   fakeProtoMovie.setGenresList([genre]);

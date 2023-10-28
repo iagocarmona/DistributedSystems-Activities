@@ -1,9 +1,11 @@
 import * as dotenv from "dotenv";
-dotenv.config();
-
-import { Request, Response } from "./generated/movies_pb";
-import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
-import { Collection } from "mongodb";
+import grpc from "grpc";
+import { ServerApiVersion, MongoClient, Collection, ObjectId } from "mongodb";
+import {
+    Request,
+    Response,
+    MongoMoviesService,
+} from "./generated/movies_pb";
 import { createMovieProtobuf } from "./utils/createMovieProtobuf";
 import {
     requestCreateValidation,
@@ -13,15 +15,12 @@ import {
 } from "./validation";
 import { ValidationError } from "yup";
 
-import grpc from "grpc";
-import { MongoMoviesService } from "./generated/movies_grpc_pb";
+dotenv.config();
 
-// SERVIDOR MONGO
+// Configuração do MongoDB
 const uri = process.env.MONGO_URI || "";
 const database = process.env.DB_NAME || "sample_mflix";
 const table = process.env.COLLECTION_NAME || "movies";
-let db;
-let collections: Collection;
 
 const client = new MongoClient(uri, {
     serverApi: {
@@ -31,6 +30,10 @@ const client = new MongoClient(uri, {
     },
 });
 
+let db;
+let collections: Collection;
+
+// Conectar ao MongoDB
 async function connectMongo() {
     try {
         await client.connect();
@@ -41,21 +44,21 @@ async function connectMongo() {
     }
 }
 
-async function myGetMovieById(
-    call: grpc.ServerUnaryCall<Request>,
-    callback: grpc.sendUnaryData<Response>
-) {
+// Função para buscar filme por ID
+async function getMovieById(call, callback) {
     const protoResponse = new Response();
-    const data = call.request.getData();
 
     try {
+        const data = call.request.getData();
         const request = call.request.toObject();
         requestGetValidation.validateSync(request);
 
         const query = { _id: new ObjectId(data) };
         const mongoMovie = await collections.findOne(query);
 
-        if (!mongoMovie) throw new Error();
+        if (!mongoMovie) {
+            throw new Error(`Filme não encontrado com o ID ${data}`);
+        }
 
         const protoMovie = createMovieProtobuf(mongoMovie);
         protoResponse.setMessage(`Filme encontrado com sucesso`);
@@ -64,19 +67,18 @@ async function myGetMovieById(
     } catch (error) {
         if (error instanceof ValidationError) {
             protoResponse.setMessage(error.message);
+            protoResponse.setSucess(false);
         } else {
-            protoResponse.setMessage(`Erro na busca do filme com o id ${data}`);
+            protoResponse.setMessage(`Erro na busca do filme com o ID ${data}`);
+            protoResponse.setSucess(false);
         }
-        protoResponse.setSucess(false);
     } finally {
         callback(null, protoResponse);
     }
 }
 
-async function myDeleteMovie(
-    call: grpc.ServerUnaryCall<Request>,
-    callback: grpc.sendUnaryData<Response>
-) {
+// Função para deletar filme por ID
+async function deleteMovie(call, callback) {
     const protoResponse = new Response();
     const data = call.request.getData();
 
@@ -96,7 +98,7 @@ async function myDeleteMovie(
             protoResponse.setMessage(error.message);
         } else {
             protoResponse.setMessage(
-                `Erro na tentativa de deleção do filme com o id ${data}`
+                `Erro na tentativa de deleção do filme com o ID ${data}`
             );
         }
         protoResponse.setSucess(false);
@@ -105,9 +107,8 @@ async function myDeleteMovie(
     }
 }
 
-async function myGetAllMovies(
-    call: grpc.ServerWritableStream<Request, Response>
-) {
+// Função para buscar todos os filmes
+async function getAllMovies(call) {
     const protoResponse = new Response();
     try {
         const moviesMongo = await collections.find({}).toArray();
@@ -124,16 +125,13 @@ async function myGetAllMovies(
     }
 }
 
-async function myCreateMovie(
-    call: grpc.ServerUnaryCall<Request>,
-    callback: grpc.sendUnaryData<Response>
-) {
+// Função para criar um novo filme
+async function createMovie(call, callback) {
     const protoResponse = new Response();
     const movie = call.request.getMovie();
 
     try {
         const data = call.request.toObject();
-
         requestCreateValidation.validateSync(data);
 
         const jsonMovie = movie?.toObject();
@@ -184,9 +182,8 @@ async function myCreateMovie(
     }
 }
 
-async function myGetMoviesByGenre(
-    call: grpc.ServerWritableStream<Request, Response>
-) {
+// Função para buscar filmes por gênero
+async function getMoviesByGenre(call) {
     const data = call.request.getData();
     const query = { genres: { $elemMatch: { $eq: data } } };
     const response = new Response();
@@ -219,9 +216,8 @@ async function myGetMoviesByGenre(
     }
 }
 
-async function myGetMoviesByActor(
-    call: grpc.ServerWritableStream<Request, Response>
-) {
+// Função para buscar filmes por ator
+async function getMoviesByActor(call) {
     const data = call.request.getData();
     const query = { cast: { $elemMatch: { $eq: data } } };
 
@@ -255,79 +251,7 @@ async function myGetMoviesByActor(
     }
 }
 
-async function myUpdateMovie(
-    call: grpc.ServerUnaryCall<Request>,
-    callback: grpc.sendUnaryData<Response>
-) {
-    const protoResponse = new Response();
-    const idMovie = call.request.getData();
-    const movie = call.request.getMovie();
-
-    try {
-        requestUpdateValidation.validateSync(call.request.toObject());
-
-        const jsonMovie = movie?.toObject();
-        const idObject = new ObjectId(idMovie);
-        let response = null;
-
-        if (jsonMovie) {
-            response = await collections.updateOne(
-                { _id: idObject },
-                {
-                    $set: {
-                        plot: jsonMovie.plot,
-                        genres: jsonMovie.genresList.map((obj) => obj.name),
-                        runtime: jsonMovie.runtime,
-                        cast: jsonMovie.castList.map((obj) => obj.actor),
-                        num_mflix_comments: jsonMovie.numMflixComments,
-                        title: jsonMovie.title,
-                        fullplot: jsonMovie.fullplot,
-                        countries: jsonMovie.countriesList.map(
-                            (obj) => obj.name
-                        ),
-                        released: jsonMovie.released,
-                        directors: jsonMovie.directorsList.map(
-                            (obj) => obj.name
-                        ),
-                        rated: jsonMovie.rated,
-                        lastupdate: jsonMovie.lastupdated,
-                        year: jsonMovie.year,
-                        type: jsonMovie.type,
-                        writers: jsonMovie.writersList.map((obj) => obj.name),
-                        languages: jsonMovie.languagesList.map(
-                            (obj) => obj.name
-                        ),
-                    },
-                }
-            );
-        }
-
-        if (!response) {
-            protoResponse.setMessage(
-                `Erro na tentativa de atualização do filme com o id ${idObject}`
-            );
-            protoResponse.setSucess(false);
-        } else {
-            protoResponse.setMessage(`Filme atualizado com sucesso`);
-            protoResponse.setSucess(true);
-            protoResponse.addMovies(movie);
-        }
-    } catch (error) {
-        if (error instanceof ValidationError) {
-            protoResponse.setMessage(error.message);
-        } else {
-            protoResponse.setMessage(
-                `Erro na tentativa de atualização do filme com o id ${idMovie}`
-            );
-        }
-
-        protoResponse.setSucess(false);
-        protoResponse.setMoviesList([]);
-    } finally {
-        callback(null, protoResponse);
-    }
-}
-
+// Iniciar o servidor gRPC
 connectMongo().then(() => {
     const maxMessageSize = 1024 * 1024 * 1024;
     const serverOptions = {
@@ -335,19 +259,19 @@ connectMongo().then(() => {
         "grpc.max_receive_message_length": maxMessageSize,
         "grpc.max_send_message_length": maxMessageSize,
     };
+
     const server = new grpc.Server(serverOptions);
     server.addService(MongoMoviesService, {
-        getMoviesById: myGetMovieById, //ok
-        createMovie: myCreateMovie,
-        deleteMovie: myDeleteMovie, //ok
+        getMoviesById: getMovieById,
+        createMovie: createMovie,
+        deleteMovie: deleteMovie,
         updateMovie: myUpdateMovie,
-        getAllMovies: myGetAllMovies, //ok
-        getMoviesByActor: myGetMoviesByActor, //ok
-        getMoviesByGenre: myGetMoviesByGenre, //ok
+        getAllMovies: getAllMovies,
+        getMoviesByActor: getMoviesByActor,
+        getMoviesByGenre: getMoviesByGenre,
     });
 
     server.bind("0.0.0.0:50051", grpc.ServerCredentials.createInsecure());
     server.start();
     console.log("Servidor iniciado em 0.0.0.0:50051");
 });
-

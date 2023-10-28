@@ -1,24 +1,32 @@
+## Como Executar
 
-### Como executar
+Para executar este projeto, siga os passos a seguir:
 
-1. Execute o seguinte comando: `yarn`
-2. Execute o comando: `yarn build:proto`
-3. Por fim, execute `yarn start`
+1. Execute o comando `yarn` para instalar as dependências do projeto.
 
-### Bibliotecas usadas (descrever as não padrões)
+2. Em seguida, execute o comando `yarn build:proto` para compilar os arquivos de definição do Protocol Buffers (protobuf).
 
-- `google-protobuf`: biblioteca do protobuf
-- `mongodb`: usada para se conectar ao mongodb
-- `ts-protoc-gen`: compilador do protobuf para typescript
-- `yup`: usada para validação
-- `@grpc/proto-loader`: utilitario para carregar arquivos .proto
-- `dotenv`: usar variaveis de ambiente
-- `grpc`: biblioteca grpc node
-- `grpc-tools`: ferramentas para desenvolver com grpc no node
+3. Por fim, execute `yarn start` para iniciar a aplicação.
 
-### Exemplos de uso
+## Bibliotecas Utilizadas
 
-Veja o arquivo `Insomnia_2023-05-13.json`
+Este projeto faz uso de várias bibliotecas não padrão para realizar suas funcionalidades. Aqui está uma descrição de algumas delas:
+
+- `google-protobuf`: Esta biblioteca é usada para trabalhar com mensagens definidas em formato protobuf, que é um formato de serialização eficiente.
+
+- `mongodb`: Utilizada para se conectar e interagir com um banco de dados MongoDB.
+
+- `ts-protoc-gen`: Este é um compilador que traduz as definições do Protocol Buffers para código TypeScript, facilitando a integração com o projeto.
+
+- `yup`: Usada para validação de dados, garantindo que os dados de entrada atendam aos requisitos esperados.
+
+- `@grpc/proto-loader`: É um utilitário que ajuda a carregar arquivos .proto e a configurar os serviços gRPC.
+
+- `dotenv`: Usada para carregar variáveis de ambiente, permitindo a configuração dinâmica do projeto.
+
+- `grpc`: Uma biblioteca para comunicação gRPC no ambiente Node.js.
+
+- `grpc-tools`: Ferramentas que auxiliam no desenvolvimento de serviços gRPC no Node.js.
 
 #### createMovie
 
