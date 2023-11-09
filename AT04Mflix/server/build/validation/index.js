@@ -57,22 +57,15 @@ exports.Movie = Yup.object({
     type: Yup.string(),
 });
 exports.requestCreateValidation = Yup.object({
-    requestId: Yup.number().required("Por favor, informe o id da requisição."),
     movie: exports.Movie.required("Por favor, envie os dados do filme."),
-    data: Yup.string().nullable(),
 });
 exports.requestUpdateValidation = Yup.object({
-    requestId: Yup.number().required("Por favor, informe o id da requisição."),
     movie: exports.Movie.required("Por favor, envie os dados do filme."),
     data: Yup.string().required("Por favor, informe o id do filme."),
 });
 exports.requestGetValidation = Yup.object({
-    requestId: Yup.number().required("Por favor, informe o id da requisição."),
-    movie: exports.Movie.nullable(),
     data: Yup.string().required("Por favor, preencha campo data da requisição."),
 });
 exports.requestDeleteValidation = Yup.object({
-    requestId: Yup.number().required("Por favor, informe o id da requisição."),
-    movie: exports.Movie.nullable(),
     data: Yup.string().required("Por favor, informe o id do filme."),
 });

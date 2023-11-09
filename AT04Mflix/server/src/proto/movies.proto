@@ -1,5 +1,18 @@
 syntax = "proto3";
 
+package mongomovies;
+
+// serviço
+service MongoMovies {
+  rpc getMoviesById (Request) returns (Response) {}
+  rpc deleteMovie (Request) returns (Response) {}
+  rpc getAllMovies (Request) returns (stream Response) {}
+  rpc createMovie (Request) returns (Response) {}
+  rpc updateMovie (Request) returns (Response) {}
+  rpc getMoviesByGenre (Request) returns (stream Response) {}
+  rpc getMoviesByActor (Request) returns (stream Response) {}
+}
+
 message Genre {
   string name = 1;
 }
@@ -46,13 +59,11 @@ message Movie {
 }
 
 message Request {
-  int32 request_id = 1;
   Movie movie = 2;
   string data = 3;
 }
 
 message Response {
-  int32 response_id = 1;
   bool sucess = 2;
   string message = 3;
   repeated Movie movies = 4;

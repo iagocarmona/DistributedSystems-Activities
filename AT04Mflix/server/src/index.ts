@@ -1,53 +1,38 @@
-import Net, { Socket } from "net";
 import * as dotenv from "dotenv";
-import { Request } from "./generated/src/proto/movies_pb";
-
-import { MongoClient, ServerApiVersion, Collection } from "mongodb";
-import { handleSocketRequest } from "./service/request";
-
 dotenv.config();
 
-// SERVIDOR MONGO
-const uri = process.env.MONGO_URI ?? "";
-const database = process.env.DB_NAME ?? "sample_mflix";
-const table = process.env.COLLECTION_NAME ?? "movies";
+import { MongoMoviesService } from "./generated/movies_grpc_pb";
+import grpc from "grpc";
+import {
+    connectMongo,
+    myCreateMovie,
+    myDeleteMovie,
+    myGetAllMovies,
+    myGetMovieById,
+    myGetMoviesByActor,
+    myGetMoviesByGenre,
+    myUpdateMovie,
+} from "./repository/movies";
 
-let db;
-let collection: Collection;
-
-// SERVIDOR SOCKET
-const port = 6666;
-const server = new Net.Server();
-
-// Conecta o servidor mongo
-const client = new MongoClient(uri, {
-    serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-    },
-});
-
-// Conecta o servidor socket
-server.listen(port, async function () {
-    console.log(`Servidor socket TCP iniciado em http://localhost:${port}`);
-
-    await client.connect();
-    db = client.db(database);
-    collection = db.collection(table);
-});
-
-// Trata as requisições recebidas pelo servidor socket
-server.on("connection", function (socket: Socket) {
-    console.log("Uma nova conexão foi estabelecida.");
-
-    socket.on("data", function (chunk: Buffer) {
-        console.log("chunk", chunk);
-        const req = Request.deserializeBinary(chunk);
-        handleSocketRequest(socket, req, collection);
+connectMongo().then(() => {
+    const maxMessageSize = 1024 * 1024 * 1024;
+    const serverOptions = {
+        "grpc.max_message_length": maxMessageSize,
+        "grpc.max_receive_message_length": maxMessageSize,
+        "grpc.max_send_message_length": maxMessageSize,
+    };
+    const server = new grpc.Server(serverOptions);
+    server.addService(MongoMoviesService, {
+        getMoviesById: myGetMovieById,
+        createMovie: myCreateMovie,
+        deleteMovie: myDeleteMovie,
+        updateMovie: myUpdateMovie,
+        getAllMovies: myGetAllMovies,
+        getMoviesByActor: myGetMoviesByActor,
+        getMoviesByGenre: myGetMoviesByGenre,
     });
 
-    socket.on("error", function (err: Error) {
-        console.log(`Error: ${err}`);
-    });
+    server.bind("0.0.0.0:50051", grpc.ServerCredentials.createInsecure());
+    server.start();
+    console.log("Servidor iniciado em 0.0.0.0:50051");
 });

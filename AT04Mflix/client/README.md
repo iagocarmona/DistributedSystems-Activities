@@ -2,11 +2,16 @@
 
 Para executar o cliente, siga as etapas abaixo:
 
-1. **Navegue até a pasta `client`**
+1. **Navegue até a pasta `client/src`**
 
-   Use o terminal para navegar até a pasta `client` do seu projeto.
+   Use o terminal para navegar até a pasta `client/src` do seu projeto.
 
-2. **Execute o Cliente**
+2. **Configure o ambiente virtual**
+
+   - `python3 -m venv myenv`
+   - `pip install -r requirements.txt`
+
+3. **Execute o Cliente**
 
    Execute o seguinte comando no terminal para iniciar o cliente:
 
@@ -26,21 +31,3 @@ O projeto utiliza as seguintes bibliotecas:
 - **grpcio-tools**: Ferramentas auxiliares para geração de código e compilação de arquivos `.proto` em Python.
 
 - **protobuf**: O protocolo Buffer, ou protobuf, é uma metodologia eficiente para serialização de dados estruturados, amplamente utilizado em sistemas de comunicação.
-
-## Geração de Arquivos
-
-Para gerar os arquivos necessários, siga estas etapas:
-
-1. **Navegue até a pasta `client`**
-
-   Use o terminal para navegar até a pasta `client` do seu projeto.
-
-2. **Execute o Comando de Geração**
-
-   Execute o seguinte comando no terminal para gerar os arquivos a partir do arquivo de definição `.proto`:
-
-   ```bash
-   protoc -I=. --python_out=. ./generated/movies.proto
-   ```
-
-   Isso irá gerar os arquivos Python necessários para a comunicação com o servidor gRPC.

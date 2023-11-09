@@ -35,220 +35,184 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateMovie = exports.getMoviesByActor = exports.getMoviesByGenre = exports.createMovie = exports.getAllMovies = exports.deleteMovie = exports.getMovieById = void 0;
+exports.myUpdateMovie = exports.myGetMoviesByActor = exports.myGetMoviesByGenre = exports.myCreateMovie = exports.myGetAllMovies = exports.myDeleteMovie = exports.myGetMovieById = exports.connectMongo = void 0;
 var mongodb_1 = require("mongodb");
+var movies_pb_1 = require("../generated/movies_pb");
+var validation_1 = require("../validation");
 var createMovieProtobuf_1 = require("../utils/createMovieProtobuf");
-/**
- * Busca um filme pelo id
- * @param collections
- * @param id
- * @returns
- */
-var getMovieById = function (collections, id) { return __awaiter(void 0, void 0, void 0, function () {
-    var query, mongoMovie, protoMovie, error_1;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                query = { _id: new mongodb_1.ObjectId(id) };
-                return [4 /*yield*/, collections.findOne(query)];
-            case 1:
-                mongoMovie = _a.sent();
-                // Se não encontrar retorna null
-                if (!mongoMovie)
-                    return [2 /*return*/, null];
-                protoMovie = (0, createMovieProtobuf_1.createMovieProtobuf)(mongoMovie);
-                // Retorna o movie protobuf
-                return [2 /*return*/, protoMovie];
-            case 2:
-                error_1 = _a.sent();
-                return [2 /*return*/, null];
-            case 3: return [2 /*return*/];
-        }
+var yup_1 = require("yup");
+// SERVIDOR MONGO
+var uri = (_a = process.env.MONGO_URI) !== null && _a !== void 0 ? _a : "";
+var database = (_b = process.env.DB_NAME) !== null && _b !== void 0 ? _b : "sample_mflix";
+var table = (_c = process.env.COLLECTION_NAME) !== null && _c !== void 0 ? _c : "movies";
+var db;
+var collections;
+var client = new mongodb_1.MongoClient(uri, {
+    serverApi: {
+        version: mongodb_1.ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+    },
+});
+function connectMongo() {
+    return __awaiter(this, void 0, void 0, function () {
+        var error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    return [4 /*yield*/, client.connect()];
+                case 1:
+                    _a.sent();
+                    db = client.db(database);
+                    collections = db.collection(table);
+                    return [3 /*break*/, 3];
+                case 2:
+                    error_1 = _a.sent();
+                    console.log("error mongo", error_1);
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
     });
-}); };
-exports.getMovieById = getMovieById;
-/**
- * Deleta um filme
- * @param collections
- * @param id
- * @returns
- */
-var deleteMovie = function (collections, id) { return __awaiter(void 0, void 0, void 0, function () {
-    var query, result, error_2;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                query = { _id: new mongodb_1.ObjectId(id) };
-                return [4 /*yield*/, collections.deleteOne(query)];
-            case 1:
-                result = _a.sent();
-                // Se não encontrar retorna null
-                if (!(result === null || result === void 0 ? void 0 : result.deletedCount)) {
-                    return [2 /*return*/, false];
-                }
-                // Retorna o movie protobuf
-                return [2 /*return*/, true];
-            case 2:
-                error_2 = _a.sent();
-                return [2 /*return*/, false];
-            case 3: return [2 /*return*/];
-        }
+}
+exports.connectMongo = connectMongo;
+function myGetMovieById(call, callback) {
+    return __awaiter(this, void 0, void 0, function () {
+        var protoResponse, data, request, query, mongoMovie, protoMovie, error_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    protoResponse = new movies_pb_1.Response();
+                    data = call.request.getData();
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, 4, 5]);
+                    request = call.request.toObject();
+                    validation_1.requestGetValidation.validateSync(request);
+                    query = { _id: new mongodb_1.ObjectId(data) };
+                    return [4 /*yield*/, collections.findOne(query)];
+                case 2:
+                    mongoMovie = _a.sent();
+                    if (!mongoMovie)
+                        throw new Error();
+                    protoMovie = (0, createMovieProtobuf_1.createMovieProtobuf)(mongoMovie);
+                    protoResponse.setMessage("Filme encontrado com sucesso");
+                    protoResponse.setSucess(true);
+                    protoResponse.addMovies(protoMovie);
+                    return [3 /*break*/, 5];
+                case 3:
+                    error_2 = _a.sent();
+                    if (error_2 instanceof yup_1.ValidationError) {
+                        protoResponse.setMessage(error_2.message);
+                    }
+                    else {
+                        protoResponse.setMessage("Erro na busca do filme com o id ".concat(data));
+                    }
+                    protoResponse.setSucess(false);
+                    return [3 /*break*/, 5];
+                case 4:
+                    callback(null, protoResponse);
+                    return [7 /*endfinally*/];
+                case 5: return [2 /*return*/];
+            }
+        });
     });
-}); };
-exports.deleteMovie = deleteMovie;
-/**
- * Busca todos os filmes
- * @param collection
- * @returns
- */
-var getAllMovies = function (collection) { return __awaiter(void 0, void 0, void 0, function () {
-    var moviesMongo, protoMovies, error_3;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                return [4 /*yield*/, collection.find({}).toArray()];
-            case 1:
-                moviesMongo = _a.sent();
-                protoMovies = moviesMongo.map(function (item) {
-                    return (0, createMovieProtobuf_1.createMovieProtobuf)(item);
-                });
-                // Retorna o array de movies protobuf
-                return [2 /*return*/, protoMovies];
-            case 2:
-                error_3 = _a.sent();
-                return [2 /*return*/, []];
-            case 3: return [2 /*return*/];
-        }
+}
+exports.myGetMovieById = myGetMovieById;
+function myDeleteMovie(call, callback) {
+    return __awaiter(this, void 0, void 0, function () {
+        var protoResponse, data, request, query, result, error_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    protoResponse = new movies_pb_1.Response();
+                    data = call.request.getData();
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, 4, 5]);
+                    request = call.request.toObject();
+                    validation_1.requestDeleteValidation.validateSync(request);
+                    query = { _id: new mongodb_1.ObjectId(data) };
+                    return [4 /*yield*/, collections.deleteOne(query)];
+                case 2:
+                    result = _a.sent();
+                    if (!(result === null || result === void 0 ? void 0 : result.deletedCount))
+                        throw new Error();
+                    protoResponse.setMessage("Filme deletado com sucesso");
+                    protoResponse.setSucess(true);
+                    return [3 /*break*/, 5];
+                case 3:
+                    error_3 = _a.sent();
+                    if (error_3 instanceof yup_1.ValidationError) {
+                        protoResponse.setMessage(error_3.message);
+                    }
+                    else {
+                        protoResponse.setMessage("Erro na tentativa de dele\u00E7\u00E3o do filme com o id ".concat(data));
+                    }
+                    protoResponse.setSucess(false);
+                    return [3 /*break*/, 5];
+                case 4:
+                    callback(null, protoResponse);
+                    return [7 /*endfinally*/];
+                case 5: return [2 /*return*/];
+            }
+        });
     });
-}); };
-exports.getAllMovies = getAllMovies;
-/**
- * Cria um filme
- * @param collection
- * @param movie
- * @returns
- */
-var createMovie = function (collection, movie) { return __awaiter(void 0, void 0, void 0, function () {
-    var jsonMovie, created, error_4;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                jsonMovie = movie.toObject();
-                return [4 /*yield*/, collection.insertOne({
-                        plot: jsonMovie.plot,
-                        genres: jsonMovie.genresList.map(function (obj) { return obj.name; }),
-                        runtime: jsonMovie.runtime,
-                        cast: jsonMovie.castList.map(function (obj) { return obj.actor; }),
-                        num_mflix_comments: jsonMovie.numMflixComments,
-                        title: jsonMovie.title,
-                        fullplot: jsonMovie.fullplot,
-                        countries: jsonMovie.countriesList.map(function (obj) { return obj.name; }),
-                        released: jsonMovie.released,
-                        directors: jsonMovie.directorsList.map(function (obj) { return obj.name; }),
-                        rated: jsonMovie.rated,
-                        lastupdate: jsonMovie.lastupdated,
-                        year: jsonMovie.year,
-                        type: jsonMovie.type,
-                        writers: jsonMovie.writersList.map(function (obj) { return obj.name; }),
-                        languages: jsonMovie.languagesList.map(function (obj) { return obj.name; }),
-                    })];
-            case 1:
-                created = _a.sent();
-                // Se não conseguir inserir retorna null
-                if (!created)
-                    return [2 /*return*/, null];
-                // Retorna o id do filme inserido
-                return [2 /*return*/, String(created.insertedId)];
-            case 2:
-                error_4 = _a.sent();
-                return [2 /*return*/, null];
-            case 3: return [2 /*return*/];
-        }
+}
+exports.myDeleteMovie = myDeleteMovie;
+function myGetAllMovies(call) {
+    return __awaiter(this, void 0, void 0, function () {
+        var protoResponse, moviesMongo, _i, moviesMongo_1, movie, protoMovie, error_4;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    protoResponse = new movies_pb_1.Response();
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, 4, 5]);
+                    return [4 /*yield*/, collections.find({}).toArray()];
+                case 2:
+                    moviesMongo = _a.sent();
+                    for (_i = 0, moviesMongo_1 = moviesMongo; _i < moviesMongo_1.length; _i++) {
+                        movie = moviesMongo_1[_i];
+                        protoMovie = (0, createMovieProtobuf_1.createMovieProtobuf)(movie);
+                        protoResponse.addMovies(protoMovie);
+                    }
+                    return [3 /*break*/, 5];
+                case 3:
+                    error_4 = _a.sent();
+                    protoResponse.setMoviesList([]);
+                    return [3 /*break*/, 5];
+                case 4:
+                    call.write(protoResponse);
+                    call.end();
+                    return [7 /*endfinally*/];
+                case 5: return [2 /*return*/];
+            }
+        });
     });
-}); };
-exports.createMovie = createMovie;
-/**
- * Busca filmes por genero
- * @param collection
- * @param genre
- * @returns
- */
-var getMoviesByGenre = function (collection, genre) { return __awaiter(void 0, void 0, void 0, function () {
-    var value, query, moviesMongo, protoMovies, error_5;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                value = genre.getName();
-                query = { genres: { $elemMatch: { $eq: value } } };
-                return [4 /*yield*/, collection.find(query).toArray()];
-            case 1:
-                moviesMongo = _a.sent();
-                protoMovies = moviesMongo.map(function (item) {
-                    return (0, createMovieProtobuf_1.createMovieProtobuf)(item);
-                });
-                // Retorna o array de movies protobuf
-                return [2 /*return*/, protoMovies];
-            case 2:
-                error_5 = _a.sent();
-                return [2 /*return*/, []];
-            case 3: return [2 /*return*/];
-        }
-    });
-}); };
-exports.getMoviesByGenre = getMoviesByGenre;
-/**
- * Busca filmes por ator
- * @param collection
- * @param cast
- * @returns
- */
-var getMoviesByActor = function (collection, cast) { return __awaiter(void 0, void 0, void 0, function () {
-    var actor, query, moviesMongo, protoMovies, error_6;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                actor = cast.getActor();
-                query = { cast: { $elemMatch: { $eq: actor } } };
-                return [4 /*yield*/, collection.find(query).toArray()];
-            case 1:
-                moviesMongo = _a.sent();
-                protoMovies = moviesMongo.map(function (item) {
-                    return (0, createMovieProtobuf_1.createMovieProtobuf)(item);
-                });
-                // Retorna o array de movies protobuf
-                return [2 /*return*/, protoMovies];
-            case 2:
-                error_6 = _a.sent();
-                return [2 /*return*/, []];
-            case 3: return [2 /*return*/];
-        }
-    });
-}); };
-exports.getMoviesByActor = getMoviesByActor;
-/**
- * Atualiza um filme
- * @param collection
- * @param id
- * @param movie
- * @returns
- */
-var updateMovie = function (collection, id, movie) { return __awaiter(void 0, void 0, void 0, function () {
-    var jsonMovie, idObject, acknowledged, error_7;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                jsonMovie = movie.toObject();
-                idObject = new mongodb_1.ObjectId(id);
-                return [4 /*yield*/, collection.updateOne({ _id: idObject }, {
-                        $set: {
+}
+exports.myGetAllMovies = myGetAllMovies;
+function myCreateMovie(call, callback) {
+    return __awaiter(this, void 0, void 0, function () {
+        var protoResponse, movie, data, jsonMovie, created, error_5;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    protoResponse = new movies_pb_1.Response();
+                    movie = call.request.getMovie();
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 4, 5, 6]);
+                    data = call.request.toObject();
+                    validation_1.requestCreateValidation.validateSync(data);
+                    jsonMovie = movie === null || movie === void 0 ? void 0 : movie.toObject();
+                    created = null;
+                    if (!jsonMovie) return [3 /*break*/, 3];
+                    return [4 /*yield*/, collections.insertOne({
                             plot: jsonMovie.plot,
                             genres: jsonMovie.genresList.map(function (obj) { return obj.name; }),
                             runtime: jsonMovie.runtime,
@@ -265,18 +229,201 @@ var updateMovie = function (collection, id, movie) { return __awaiter(void 0, vo
                             type: jsonMovie.type,
                             writers: jsonMovie.writersList.map(function (obj) { return obj.name; }),
                             languages: jsonMovie.languagesList.map(function (obj) { return obj.name; }),
-                        },
-                    })];
-            case 1:
-                acknowledged = (_a.sent()).acknowledged;
-                // Retorna o resultado da operação
-                return [2 /*return*/, acknowledged];
-            case 2:
-                error_7 = _a.sent();
-                console.log(error_7);
-                throw error_7;
-            case 3: return [2 /*return*/];
-        }
+                        })];
+                case 2:
+                    created = _a.sent();
+                    _a.label = 3;
+                case 3:
+                    if (!created) {
+                        protoResponse.setMessage("Erro na tentativa de cria\u00E7\u00E3o do filme");
+                        protoResponse.setSucess(false);
+                    }
+                    else {
+                        protoResponse.setMessage("Filme criado com sucesso");
+                        protoResponse.setSucess(true);
+                        if (movie) {
+                            movie.setId(String(created.insertedId));
+                            protoResponse.addMovies(movie);
+                        }
+                    }
+                    return [3 /*break*/, 6];
+                case 4:
+                    error_5 = _a.sent();
+                    if (error_5 instanceof yup_1.ValidationError) {
+                        protoResponse.setMessage(error_5.message);
+                    }
+                    else {
+                        protoResponse.setMessage("Erro na tentativa de cria\u00E7\u00E3o do filme");
+                    }
+                    protoResponse.setSucess(false);
+                    return [3 /*break*/, 6];
+                case 5:
+                    callback(null, protoResponse);
+                    return [7 /*endfinally*/];
+                case 6: return [2 /*return*/];
+            }
+        });
     });
-}); };
-exports.updateMovie = updateMovie;
+}
+exports.myCreateMovie = myCreateMovie;
+function myGetMoviesByGenre(call) {
+    return __awaiter(this, void 0, void 0, function () {
+        var data, query, response, moviesMongo, _i, moviesMongo_2, item, protoMovie, error_6;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    data = call.request.getData();
+                    query = { genres: { $elemMatch: { $eq: data } } };
+                    response = new movies_pb_1.Response();
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, 4, 5]);
+                    validation_1.requestGetValidation.validateSync(call.request.toObject());
+                    return [4 /*yield*/, collections.find(query).toArray()];
+                case 2:
+                    moviesMongo = _a.sent();
+                    for (_i = 0, moviesMongo_2 = moviesMongo; _i < moviesMongo_2.length; _i++) {
+                        item = moviesMongo_2[_i];
+                        protoMovie = (0, createMovieProtobuf_1.createMovieProtobuf)(item);
+                        response.addMovies(protoMovie);
+                    }
+                    if (moviesMongo.length === 0) {
+                        response.setMessage("Nenhum filme encontrado com o g\u00EAnero ".concat(data));
+                    }
+                    return [3 /*break*/, 5];
+                case 3:
+                    error_6 = _a.sent();
+                    if (error_6 instanceof yup_1.ValidationError) {
+                        response.setMessage(error_6.message);
+                    }
+                    else {
+                        response.setMessage("Erro durante a busca pelo filme no banco de dados.");
+                    }
+                    response.setSucess(false);
+                    return [3 /*break*/, 5];
+                case 4:
+                    call.write(response);
+                    call.end();
+                    return [7 /*endfinally*/];
+                case 5: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.myGetMoviesByGenre = myGetMoviesByGenre;
+function myGetMoviesByActor(call) {
+    return __awaiter(this, void 0, void 0, function () {
+        var data, query, response, moviesMongo, _i, moviesMongo_3, item, protoMovie, error_7;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    data = call.request.getData();
+                    query = { cast: { $elemMatch: { $eq: data } } };
+                    response = new movies_pb_1.Response();
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, 4, 5]);
+                    validation_1.requestGetValidation.validateSync(call.request.toObject());
+                    return [4 /*yield*/, collections.find(query).toArray()];
+                case 2:
+                    moviesMongo = _a.sent();
+                    for (_i = 0, moviesMongo_3 = moviesMongo; _i < moviesMongo_3.length; _i++) {
+                        item = moviesMongo_3[_i];
+                        protoMovie = (0, createMovieProtobuf_1.createMovieProtobuf)(item);
+                        response.addMovies(protoMovie);
+                    }
+                    if (moviesMongo.length === 0) {
+                        response.setMessage("Nenhum filme encontrado com o ator ".concat(data));
+                    }
+                    return [3 /*break*/, 5];
+                case 3:
+                    error_7 = _a.sent();
+                    if (error_7 instanceof yup_1.ValidationError) {
+                        response.setMessage(error_7.message);
+                    }
+                    else {
+                        response.setMessage("Erro durante a busca pelo filme no banco de dados.");
+                    }
+                    response.setSucess(false);
+                    return [3 /*break*/, 5];
+                case 4:
+                    call.write(response);
+                    call.end();
+                    return [7 /*endfinally*/];
+                case 5: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.myGetMoviesByActor = myGetMoviesByActor;
+function myUpdateMovie(call, callback) {
+    return __awaiter(this, void 0, void 0, function () {
+        var protoResponse, idMovie, movie, jsonMovie, idObject, response, error_8;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    protoResponse = new movies_pb_1.Response();
+                    idMovie = call.request.getData();
+                    movie = call.request.getMovie();
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 4, 5, 6]);
+                    validation_1.requestUpdateValidation.validateSync(call.request.toObject());
+                    jsonMovie = movie === null || movie === void 0 ? void 0 : movie.toObject();
+                    idObject = new mongodb_1.ObjectId(idMovie);
+                    response = null;
+                    if (!jsonMovie) return [3 /*break*/, 3];
+                    return [4 /*yield*/, collections.updateOne({ _id: idObject }, {
+                            $set: {
+                                plot: jsonMovie.plot,
+                                genres: jsonMovie.genresList.map(function (obj) { return obj.name; }),
+                                runtime: jsonMovie.runtime,
+                                cast: jsonMovie.castList.map(function (obj) { return obj.actor; }),
+                                num_mflix_comments: jsonMovie.numMflixComments,
+                                title: jsonMovie.title,
+                                fullplot: jsonMovie.fullplot,
+                                countries: jsonMovie.countriesList.map(function (obj) { return obj.name; }),
+                                released: jsonMovie.released,
+                                directors: jsonMovie.directorsList.map(function (obj) { return obj.name; }),
+                                rated: jsonMovie.rated,
+                                lastupdate: jsonMovie.lastupdated,
+                                year: jsonMovie.year,
+                                type: jsonMovie.type,
+                                writers: jsonMovie.writersList.map(function (obj) { return obj.name; }),
+                                languages: jsonMovie.languagesList.map(function (obj) { return obj.name; }),
+                            },
+                        })];
+                case 2:
+                    response = _a.sent();
+                    _a.label = 3;
+                case 3:
+                    if (!response) {
+                        protoResponse.setMessage("Erro na tentativa de atualiza\u00E7\u00E3o do filme com o id ".concat(idObject));
+                        protoResponse.setSucess(false);
+                    }
+                    else {
+                        protoResponse.setMessage("Filme atualizado com sucesso");
+                        protoResponse.setSucess(true);
+                        protoResponse.addMovies(movie);
+                    }
+                    return [3 /*break*/, 6];
+                case 4:
+                    error_8 = _a.sent();
+                    if (error_8 instanceof yup_1.ValidationError) {
+                        protoResponse.setMessage(error_8.message);
+                    }
+                    else {
+                        protoResponse.setMessage("Erro na tentativa de atualiza\u00E7\u00E3o do filme com o id ".concat(idMovie));
+                    }
+                    protoResponse.setSucess(false);
+                    protoResponse.setMoviesList([]);
+                    return [3 /*break*/, 6];
+                case 5:
+                    callback(null, protoResponse);
+                    return [7 /*endfinally*/];
+                case 6: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.myUpdateMovie = myUpdateMovie;

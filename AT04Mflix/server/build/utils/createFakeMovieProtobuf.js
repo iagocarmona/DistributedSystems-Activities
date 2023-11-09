@@ -1,21 +1,21 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createFakeMovieProtobuf = void 0;
-var movies_pb_1 = require("../generated/src/proto/movies_pb");
+var movies_pb_1 = require("../generated/movies_pb");
 function createFakeMovieProtobuf() {
     var fakeProtoMovie = new movies_pb_1.Movie();
     var genre = new movies_pb_1.Genre();
-    genre.setName("genre 1");
+    genre.setName("Genero teste 1");
     var cast = new movies_pb_1.Cast();
-    cast.setActor("jhonatan");
+    cast.setActor("James Cameron");
     var country = new movies_pb_1.Country();
     country.setName("country");
     var director = new movies_pb_1.Director();
-    director.setName("diretor jhonatan");
+    director.setName("James Cameron Director");
     var language = new movies_pb_1.Language();
     language.setName("Portugues");
     var writer = new movies_pb_1.Writer();
-    writer.setName("soneca");
+    writer.setName("Edson Arantes do Nascimento");
     fakeProtoMovie.setPlot("plot");
     fakeProtoMovie.setGenresList([genre]);
     fakeProtoMovie.setRuntime(1);
