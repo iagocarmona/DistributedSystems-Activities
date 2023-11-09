@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+      "outDir": "./build",
+      "removeComments": true,
+      "preserveConstEnums": true,
+      "sourceMap": true,
+      "esModuleInterop": true
+    }
+}
